@@ -16,18 +16,17 @@ The [Developer Sandbox](https://developers.redhat.com/developer-sandbox) is free
 export TOKEN=$(openssl rand -hex 32)
 export PASSWORD=changeme
 
-# 2. Install
+# 2. Install (into your current namespace — the sandbox assigns one for you)
 helm install ai-beacon \
   oci://ghcr.io/manusa/charts/ai-beacon \
   --version 0.0.0-snapshot \
   --set openshift=true \
   --set persistence.enabled=false \
   --set auth.token="$TOKEN" \
-  --set auth.password="$PASSWORD" \
-  -n ai-beacon --create-namespace
+  --set auth.password="$PASSWORD"
 
 # 3. Get the dashboard URL
-oc get route -n ai-beacon -o jsonpath='https://{.items[0].spec.host}'
+oc get route ai-beacon -o jsonpath='https://{.spec.host}'
 ```
 
 Open the dashboard URL in your browser and log in with the password you set above.
