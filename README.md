@@ -4,6 +4,19 @@ A web dashboard for monitoring and managing AI coding agent sessions across your
 
 ![AI Beacon Dashboard](screenshots/dashboard.png)
 
+## Optional requirements
+
+AI Beacon works out of the box — install it, log in, and see your agent sessions.
+For the full experience, have these on the machines running your agents:
+
+| Tool | What it unlocks |
+|------|----------------|
+| [`tmux`](https://github.com/tmux/tmux) | Terminal attach from the dashboard, remote session spawning |
+| [`git`](https://git-scm.com/) | Current branch display, worktree management |
+| [`gh`](https://cli.github.com/) (authenticated) | PR status and checks on session cards, review and merge PRs from the dashboard |
+
+Without them the dashboard still tracks every session's model, context usage, cost, and duration.
+
 ## Deploy to OpenShift Developer Sandbox
 
 The [Developer Sandbox](https://developers.redhat.com/developer-sandbox) is free and available to anyone with a Red Hat account.
@@ -58,14 +71,33 @@ kubectl exec -n ai-beacon deploy/ai-beacon -- cat /data/password
 kubectl exec -n ai-beacon deploy/ai-beacon -- cat /data/token
 ```
 
+## Agent configuration
+
+The setup guide covers installing the CLI and connecting to the server.
+These additional environment variables are optional but useful:
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `AI_BEACON_PROJECTS_DIR` | Base directory for your repositories — enables spawning new sessions and worktree workflows from the dashboard | _(disabled)_ |
+| `AI_BEACON_DEVICE_NAME` | Friendly name shown in the dashboard for this machine | hostname |
+
+Set them in your shell profile (e.g. `~/.zshrc`) so they apply to every session:
+
+```bash
+export AI_BEACON_PROJECTS_DIR=~/projects
+export AI_BEACON_DEVICE_NAME=macbook
+```
+
 ## Quick look: container image
 
 To try the dashboard locally without a cluster:
 
 ```bash
-podman run -p 8080:8080 ghcr.io/manusa/ai-beacon:latest
-# open http://localhost:8080
+podman run -e AI_BEACON_AUTH_PASSWORD=demo -p 8080:8080 ghcr.io/manusa/ai-beacon:latest
 ```
+
+Open <http://localhost:8080> and log in with password **demo**.
+The dashboard will be empty until you connect an agent — click the **rocket icon** in the top bar for setup instructions.
 
 ## License
 
