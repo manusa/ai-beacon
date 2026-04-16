@@ -93,7 +93,7 @@ export AI_BEACON_DEVICE_NAME=macbook
 To try the dashboard locally without a cluster:
 
 ```bash
-podman run -e AI_BEACON_AUTH_PASSWORD=demo -p 8080:8080 ghcr.io/manusa/ai-beacon:latest
+podman run --pull=always -e AI_BEACON_AUTH_PASSWORD=demo -p 8080:8080 ghcr.io/manusa/ai-beacon:latest
 ```
 
 Open <http://localhost:8080> and log in with password **demo**.
