@@ -1,56 +1,73 @@
 # AI Beacon
 
-A web dashboard for monitoring and orchestrating AI coding agents across your devices.
+A web dashboard for monitoring and managing AI coding agent sessions across your devices.
 
-AI Beacon gives you a single pane of glass over every `claude` (and other coding-agent) session you're running. See which agents are working, what they're working on, attach a terminal, spawn new sessions — all from a browser, on any device that can reach the dashboard.
+![AI Beacon Dashboard](screenshots/dashboard.png)
 
-## Status
+## Deploy to OpenShift Developer Sandbox
 
-This project is in **early access**. Source will be published to this repository once the distribution pipeline and onboarding story are validated with early users. In the meantime, pre-built artifacts are available below.
-
-## Try It
-
-### Container image
+The [Developer Sandbox](https://developers.redhat.com/developer-sandbox) is free and available to anyone with a Red Hat account.
 
 ```bash
-podman run -p 8080:8080 ghcr.io/manusa/ai-beacon:latest
-# then: open http://localhost:8080
-```
+# 1. Set credentials
+#    The token authenticates agents to the server.
+#    The password is for browser login — pick something you'll remember.
+#    WARNING: don't reuse a real password here; the value is passed on the command line.
+export TOKEN=$(openssl rand -hex 32)
+export PASSWORD=changeme
 
-Images are also mirrored to `quay.io/manusa/ai-beacon`.
-
-### Snapshot binary
-
-A rolling `snapshot` pre-release tracks the current development tip. Cross-compiled for macOS, Linux, and Windows (amd64 + arm64):
-
-```bash
-# Linux x86_64
-curl -L -o ai-beacon \
-  https://github.com/manusa/ai-beacon/releases/download/snapshot/ai-beacon-linux-amd64
-chmod +x ai-beacon
-
-./ai-beacon server               # dashboard on :8080
-./ai-beacon session -- claude    # wrap a coding agent in another terminal
-```
-
-See the [snapshot release](https://github.com/manusa/ai-beacon/releases/tag/snapshot) for all platform downloads.
-
-### Helm chart (Kubernetes / OpenShift)
-
-```bash
+# 2. Install
 helm install ai-beacon \
   oci://ghcr.io/manusa/charts/ai-beacon \
   --version 0.0.0-snapshot \
+  --set openshift=true \
+  --set persistence.enabled=false \
+  --set auth.token="$TOKEN" \
+  --set auth.password="$PASSWORD" \
+  -n ai-beacon --create-namespace
+
+# 3. Get the dashboard URL
+oc get route -n ai-beacon -o jsonpath='https://{.items[0].spec.host}'
+```
+
+Open the dashboard URL in your browser and log in with the password you set above.
+Once inside, click the **rocket icon** in the top bar — the built-in setup guide walks you through downloading the CLI and connecting your first agent.
+
+> [!NOTE]
+> `--version 0.0.0-snapshot` is a rolling pre-release alias that tracks the latest build.
+> It is required until a stable release is published.
+
+## Deploy to any Kubernetes cluster
+
+```bash
+export TOKEN=$(openssl rand -hex 32)
+export PASSWORD=changeme
+
+helm install ai-beacon \
+  oci://ghcr.io/manusa/charts/ai-beacon \
+  --version 0.0.0-snapshot \
+  --set ingress.host=ai-beacon.example.com \
+  --set auth.token="$TOKEN" \
+  --set auth.password="$PASSWORD" \
   -n ai-beacon --create-namespace
 ```
 
-> [!NOTE]
-> `--version 0.0.0-snapshot` is a rolling pre-release alias that always
-> points to the latest main-branch build. It is required until a stable
-> `v0.1.0` is released, because Helm's OCI resolver skips pre-release
-> versions (`0.1.0-dev.<sha>`) when no explicit version is given. Pin
-> to a specific `0.1.0-dev.<sha>` tag for reproducible deployments.
+On clusters with persistent storage, you can omit `auth.token` and `auth.password` — credentials are auto-generated and persisted to the volume. Retrieve them with:
+
+```bash
+kubectl exec -n ai-beacon deploy/ai-beacon -- cat /data/password
+kubectl exec -n ai-beacon deploy/ai-beacon -- cat /data/token
+```
+
+## Quick look: container image
+
+To try the dashboard locally without a cluster:
+
+```bash
+podman run -p 8080:8080 ghcr.io/manusa/ai-beacon:latest
+# open http://localhost:8080
+```
 
 ## License
 
-Licensed under the [Apache License 2.0](./LICENSE).
+[Apache License 2.0](LICENSE)
