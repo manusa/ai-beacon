@@ -1,3 +1,5 @@
+[![Contribute](https://www.eclipse.org/che/contribute.svg)](https://workspaces.openshift.com#https://github.com/manusa/ai-beacon)
+
 # AI Beacon
 
 A web dashboard for monitoring and managing AI coding agent sessions across your devices.
