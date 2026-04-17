@@ -57,6 +57,7 @@ oc get route ai-beacon -o jsonpath='https://{.spec.host}'
 
 Open the dashboard URL in your browser and log in with the password you set above.
 Once inside, click the **rocket icon** in the top bar — the built-in setup guide walks you through downloading the CLI and connecting your first agent.
+Then head to [Agent configuration](#agent-configuration) for optional tuning.
 
 > [!NOTE]
 > `--version 0.0.0-snapshot` is a rolling pre-release alias that tracks the latest build.
@@ -84,22 +85,7 @@ kubectl exec -n ai-beacon deploy/ai-beacon -- cat /data/password
 kubectl exec -n ai-beacon deploy/ai-beacon -- cat /data/token
 ```
 
-## Agent configuration
-
-The setup guide covers installing the CLI and connecting to the server.
-These additional environment variables are optional but useful:
-
-| Variable | Purpose | Default |
-|----------|---------|---------|
-| `AI_BEACON_PROJECTS_DIR` | Base directory for your repositories — enables spawning new sessions and worktree workflows from the dashboard | _(disabled)_ |
-| `AI_BEACON_DEVICE_NAME` | Friendly name shown in the dashboard for this machine | hostname |
-
-Set them in your shell profile (e.g. `~/.zshrc`) so they apply to every session:
-
-```bash
-export AI_BEACON_PROJECTS_DIR=~/projects
-export AI_BEACON_DEVICE_NAME=macbook
-```
+See [Agent configuration](#agent-configuration) for optional tuning.
 
 ## Container image
 
@@ -116,9 +102,27 @@ podman run --pull=always \
 
 Open <http://localhost:8080> and log in with password **demo**.
 The dashboard will be empty until you connect an agent — click the **rocket icon** in the top bar for setup instructions.
+Then head to [Agent configuration](#agent-configuration) for optional tuning.
 
 > [!IMPORTANT]
 > Mount `/data` to a persistent volume (named volume above, or a bind mount). The agent auth token lives there; without a volume, every container restart regenerates it and silently invalidates the token baked into your installed agent hooks — sessions stop appearing on the dashboard until you re-run `ai-beacon install` with the new token.
+
+## Agent configuration
+
+The setup guide covers installing the CLI and connecting to the server.
+These additional environment variables are optional but useful:
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `AI_BEACON_PROJECTS_DIR` | Base directory for your repositories — enables spawning new sessions and worktree workflows from the dashboard | _(disabled)_ |
+| `AI_BEACON_DEVICE_NAME` | Friendly name shown in the dashboard for this machine | hostname |
+
+Set them in your shell profile (e.g. `~/.zshrc`) so they apply to every session:
+
+```bash
+export AI_BEACON_PROJECTS_DIR=~/projects
+export AI_BEACON_DEVICE_NAME=macbook
+```
 
 ## License
 
