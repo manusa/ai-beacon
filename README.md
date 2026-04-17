@@ -2,12 +2,25 @@
 
 A web dashboard for monitoring and managing AI coding agent sessions across your devices.
 
+> [!NOTE]
+> **Early access preview** — AI Beacon is under active development. Pre-built binaries and container images are available now; source code will be published once we have initial validation from early users.
+> Currently supports **Claude Code**. Support for additional coding agents is planned.
+
 ![AI Beacon Dashboard](screenshots/dashboard.png)
 
-## Optional requirements
+## Deploy
 
-AI Beacon works out of the box — install it, log in, and see your agent sessions.
-For the full experience, have these on the machines running your agents:
+Pick a deployment method and follow the steps — the built-in setup guide will walk you through connecting your first agent.
+
+| Method | Best for |
+|--------|----------|
+| [OpenShift Developer Sandbox](#deploy-to-openshift-developer-sandbox) | Free cloud dashboard, no credit card |
+| [Any Kubernetes cluster](#deploy-to-any-kubernetes-cluster) | Your own cluster with Helm |
+| [Container image](#container-image) | Quick local look without a cluster |
+
+## Recommended tools
+
+AI Beacon works out of the box, but most features require these tools on the machines running your agents:
 
 | Tool | What it unlocks |
 |------|----------------|
@@ -88,7 +101,7 @@ export AI_BEACON_PROJECTS_DIR=~/projects
 export AI_BEACON_DEVICE_NAME=macbook
 ```
 
-## Quick look: container image
+## Container image
 
 To try the dashboard locally without a cluster:
 
