@@ -78,7 +78,7 @@ commands:
         echo "=== AI Beacon Deployment Status ==="
         echo ""
         echo "Helm Release:"
-        helm list | grep ai-beacon || echo "Not installed"
+        helm status ai-beacon 2>/dev/null || echo "Not installed"
         echo ""
         echo "Pods:"
         oc get pods -l app.kubernetes.io/name=ai-beacon
