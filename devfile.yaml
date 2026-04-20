@@ -1,0 +1,91 @@
+schemaVersion: 2.3.0
+metadata:
+  name: ai-beacon
+  version: 1.0.0
+  description: AI Beacon - Web dashboard for monitoring AI coding agent sessions
+  displayName: AI Beacon
+attributes:
+  controller.devfile.io/storage-type: ephemeral
+components:
+  - name: developer-tools
+    container:
+      image: quay.io/devfile/universal-developer-image:ubi10-latest
+      memoryLimit: 2Gi
+      memoryRequest: 512Mi
+      cpuLimit: 1000m
+      cpuRequest: 100m
+      mountSources: true
+      endpoints:
+        - name: dashboard
+          targetPort: 8080
+          exposure: public
+          protocol: https
+
+commands:
+  - id: deploy-to-sandbox
+    exec:
+      label: Deploy to Developer Sandbox
+      component: developer-tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: ./scripts/deploy-sandbox.sh
+      group:
+        kind: deploy
+        isDefault: true
+
+  - id: get-dashboard-url
+    exec:
+      label: Get Dashboard URL
+      component: developer-tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: oc get route ai-beacon -o jsonpath='https://{.spec.host}' 2>/dev/null && echo "" || echo "Dashboard not deployed yet. Run 'Deploy to Developer Sandbox' first."
+      group:
+        kind: run
+
+  - id: get-credentials
+    exec:
+      label: Get Credentials
+      component: developer-tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: |
+        echo "=== AI Beacon Credentials ==="
+        echo ""
+        echo "Token (for agents):"
+        oc get secret ai-beacon-credentials -o go-template='{{index .data "token" | base64decode}}' 2>/dev/null && echo "" || echo "Not found - deployment may not be complete"
+        echo ""
+        echo "Password (for dashboard login):"
+        oc get secret ai-beacon-credentials -o go-template='{{index .data "password" | base64decode}}' 2>/dev/null && echo "" || echo "Not found - deployment may not be complete"
+      group:
+        kind: run
+
+  - id: uninstall
+    exec:
+      label: Uninstall AI Beacon
+      component: developer-tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: |
+        echo "Uninstalling AI Beacon..."
+        helm uninstall ai-beacon 2>/dev/null || echo "AI Beacon is not installed"
+        oc delete secret ai-beacon-credentials 2>/dev/null || true
+        oc delete configmap ai-beacon-credentials 2>/dev/null || true
+        echo "Uninstall complete"
+      group:
+        kind: run
+
+  - id: check-status
+    exec:
+      label: Check Deployment Status
+      component: developer-tools
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: |
+        echo "=== AI Beacon Deployment Status ==="
+        echo ""
+        echo "Helm Release:"
+        helm status ai-beacon 2>/dev/null || echo "Not installed"
+        echo ""
+        echo "Pods:"
+        oc get pods -l app.kubernetes.io/name=ai-beacon
+        echo ""
+        echo "Route:"
+        oc get route ai-beacon 2>/dev/null || echo "Route not found"
+      group:
+        kind: run
