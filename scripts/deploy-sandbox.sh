@@ -40,12 +40,6 @@ echo ""
 read -p "Enter dashboard password [changeme]: " PASSWORD
 PASSWORD=${PASSWORD:-changeme}
 
-# Validate password is not empty
-if [ -z "$PASSWORD" ]; then
-    echo "❌ Error: Password cannot be empty"
-    exit 1
-fi
-
 # Generate random token for agent authentication
 TOKEN=$(openssl rand -hex 32)
 
