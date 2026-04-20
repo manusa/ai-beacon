@@ -1,5 +1,3 @@
-[![Contribute](https://www.eclipse.org/che/contribute.svg)](https://workspaces.openshift.com#https://github.com/manusa/ai-beacon)
-
 # AI Beacon
 
 A web dashboard for monitoring and managing AI coding agent sessions across your devices.
@@ -125,6 +123,10 @@ Set them in your shell profile (e.g. `~/.zshrc`) so they apply to every session:
 export AI_BEACON_PROJECTS_DIR=~/projects
 export AI_BEACON_DEVICE_NAME=macbook
 ```
+
+## Contributing
+
+[![Contribute](https://www.eclipse.org/che/contribute.svg)](https://workspaces.openshift.com#https://github.com/manusa/ai-beacon)
 
 ## License
 
