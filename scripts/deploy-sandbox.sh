@@ -36,6 +36,11 @@ echo "✓ Logged in as: $(oc whoami)"
 echo "✓ Current namespace: $(oc project -q)"
 echo ""
 
+if helm status ai-beacon >/dev/null 2>&1; then
+    echo "❌ Error: ai-beacon is already installed in namespace $(oc project -q)."
+    exit 1
+fi
+
 # Prompt for password with default
 read -p "Enter dashboard password [changeme]: " PASSWORD
 PASSWORD=${PASSWORD:-changeme}
