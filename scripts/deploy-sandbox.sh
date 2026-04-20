@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 echo "==================================="
 echo "AI Beacon - Developer Sandbox Deploy"
