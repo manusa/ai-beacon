@@ -86,15 +86,21 @@ echo "   oc get configmap ai-beacon-credentials -o yaml"
 echo ""
 echo "==================================="
 
-# Wait for the route to be ready
+# Wait for the route host (route object can exist before spec.host is set)
 echo ""
 echo "Waiting for route to be ready..."
-sleep 5
+for _ in {1..30}; do
+    host=$(oc get route ai-beacon -o jsonpath='{.spec.host}' 2>/dev/null) || true
+    if [ -n "$host" ]; then
+        break
+    fi
+    sleep 1
+done
 
-DASHBOARD_URL=$(oc get route ai-beacon -o jsonpath='https://{.spec.host}' 2>/dev/null)
-if [ -n "$DASHBOARD_URL" ]; then
+host=$(oc get route ai-beacon -o jsonpath='{.spec.host}' 2>/dev/null) || true
+if [ -n "$host" ]; then
     echo ""
-    echo "🚀 Dashboard URL: $DASHBOARD_URL"
+    echo "🚀 Dashboard URL: https://${host}"
 else
     echo "⚠️  Route not ready yet. Run 'oc get route ai-beacon' to check status."
 fi
