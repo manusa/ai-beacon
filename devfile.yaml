@@ -49,10 +49,10 @@ commands:
         echo "=== AI Beacon Credentials ==="
         echo ""
         echo "Token (for agents):"
-        oc get configmap ai-beacon-credentials -o jsonpath='{.data.token}' 2>/dev/null && echo "" || echo "Not found - deployment may not be complete"
+        oc get secret ai-beacon-credentials -o go-template='{{index .data "token" | base64decode}}' 2>/dev/null && echo "" || echo "Not found - deployment may not be complete"
         echo ""
         echo "Password (for dashboard login):"
-        oc get configmap ai-beacon-credentials -o jsonpath='{.data.password}' 2>/dev/null && echo "" || echo "Not found - deployment may not be complete"
+        oc get secret ai-beacon-credentials -o go-template='{{index .data "password" | base64decode}}' 2>/dev/null && echo "" || echo "Not found - deployment may not be complete"
       group:
         kind: run
 
@@ -64,6 +64,7 @@ commands:
       commandLine: |
         echo "Uninstalling AI Beacon..."
         helm uninstall ai-beacon 2>/dev/null || echo "AI Beacon is not installed"
+        oc delete secret ai-beacon-credentials 2>/dev/null || true
         oc delete configmap ai-beacon-credentials 2>/dev/null || true
         echo "Uninstall complete"
       group:

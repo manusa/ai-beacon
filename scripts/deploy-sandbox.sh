@@ -58,10 +58,11 @@ helm install ai-beacon \
   --set auth.token="$TOKEN" \
   --set auth.password="$PASSWORD"
 
-# Store credentials in a ConfigMap for easy retrieval
+# Store credentials in a Secret for easy retrieval
 echo ""
 echo "Storing credentials..."
-oc create configmap ai-beacon-credentials \
+oc delete configmap ai-beacon-credentials >/dev/null 2>&1 || true
+oc create secret generic ai-beacon-credentials \
   --from-literal=token="$TOKEN" \
   --from-literal=password="$PASSWORD" \
   --dry-run=client -o yaml | oc apply -f -
@@ -82,7 +83,8 @@ echo ""
 echo "3. Click the rocket icon in the dashboard to get agent setup instructions"
 echo ""
 echo "4. To retrieve credentials later, run:"
-echo "   oc get configmap ai-beacon-credentials -o yaml"
+echo "   oc extract secret/ai-beacon-credentials --keys=token --to=-"
+echo "   oc extract secret/ai-beacon-credentials --keys=password --to=-"
 echo ""
 echo "==================================="
 
