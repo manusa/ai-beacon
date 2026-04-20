@@ -4,7 +4,8 @@ metadata:
   version: 1.0.0
   description: AI Beacon - Web dashboard for monitoring AI coding agent sessions
   displayName: AI Beacon
-
+attributes:
+  controller.devfile.io/storage-type: ephemeral
 components:
   - name: developer-tools
     container:
