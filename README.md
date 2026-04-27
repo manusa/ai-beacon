@@ -1,12 +1,19 @@
 # AI Beacon
 
-A web dashboard for monitoring and managing AI coding agent sessions across your devices.
+Watch every coding agent on every machine — and step in the moment one needs you.
+
+![AI Beacon dashboard — live view of multiple Claude Code sessions across devices](docs/assets/demo.gif)
+
+## Why AI Beacon
+
+- **Notice when an agent needs you.** Permission prompts, idle sessions, finished runs — surfaced on one dashboard instead of buried across terminals.
+- **Jump in from anywhere.** Attach to any session's terminal from the browser — laptop, phone, another machine — and unblock it without SSHing in.
+- **One screen across every machine.** Track model, context usage, cost, branch, and PR status for every Claude Code session you've started, wherever it's running.
+
+→ **[Try it free in ~2 minutes on the OpenShift Developer Sandbox](#deploy-to-openshift-developer-sandbox)**
 
 > [!NOTE]
-> **Early access preview** — AI Beacon is under active development. Pre-built binaries and container images are available now; source code will be published once we have initial validation from early users.
-> Currently supports **Claude Code**. Support for additional coding agents is planned.
-
-![AI Beacon Dashboard](screenshots/dashboard.png)
+> **Early access** — binaries, container image, and Helm chart are available now; source will be published after this validation phase. Currently supports **Claude Code** (more agents planned). Feedback via [issues](https://github.com/manusa/ai-beacon/issues) is the whole point of this phase — please open one.
 
 ## Deploy
 
