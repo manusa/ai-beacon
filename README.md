@@ -13,7 +13,7 @@ Watch every coding agent on every machine — and step in the moment one needs y
 → **[Try it free in ~2 minutes on the OpenShift Developer Sandbox](#deploy-to-openshift-developer-sandbox)**
 
 > [!NOTE]
-> **Early access** — binaries, container image, and Helm chart are available now; source will be published after this validation phase. Currently supports **Claude Code** (more agents planned). Feedback via [issues](https://github.com/manusa/ai-beacon/issues) is the whole point of this phase — please open one.
+> **Early access** — binaries, container image, and Helm chart are available now; source will be published after this validation phase. Currently, supports **Claude Code** (more agents planned). Feedback via [issues](https://github.com/manusa/ai-beacon/issues) is the whole point of this phase — please open one.
 
 ## Deploy
 
@@ -31,7 +31,6 @@ AI Beacon works out of the box, but most features require these tools on the mac
 
 | Tool | What it unlocks |
 |------|----------------|
-| [`tmux`](https://github.com/tmux/tmux) | Terminal attach from the dashboard, remote session spawning |
 | [`git`](https://git-scm.com/) | Current branch display, worktree management |
 | [`gh`](https://cli.github.com/) (authenticated) | PR status and checks on session cards, review and merge PRs from the dashboard |
 
