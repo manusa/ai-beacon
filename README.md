@@ -38,7 +38,7 @@ Without them the dashboard still tracks every session's model, context usage, co
 
 ## Deploy to OpenShift Developer Sandbox
 
-The [Developer Sandbox](https://developers.redhat.com/developer-sandbox) is free and available to anyone with a Red Hat account.
+The [Developer Sandbox](https://developers.redhat.com/developer-sandbox) is free and available to anyone with a Red Hat account. The same recipe works on any OpenShift cluster.
 
 ```bash
 # 1. Set the agent token
