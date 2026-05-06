@@ -41,27 +41,26 @@ Without them the dashboard still tracks every session's model, context usage, co
 The [Developer Sandbox](https://developers.redhat.com/developer-sandbox) is free and available to anyone with a Red Hat account.
 
 ```bash
-# 1. Set credentials
-#    The token authenticates agents to the server.
-#    The password is for browser login — pick something you'll remember.
-#    WARNING: don't reuse a real password here; the value is passed on the command line.
+# 1. Set the agent token
+#    The token authenticates agents to the dashboard. Browser login uses
+#    your OpenShift / Red Hat account via the OAuth Proxy sidecar — no
+#    password to manage.
 export TOKEN=$(openssl rand -hex 32)
-export PASSWORD=changeme
 
 # 2. Install (into your current namespace — the sandbox assigns one for you)
 helm install ai-beacon \
   oci://ghcr.io/manusa/charts/ai-beacon \
   --version 0.0.0-snapshot \
   --set openshift=true \
+  --set oauthProxy.enabled=true \
   --set persistence.enabled=false \
-  --set auth.token="$TOKEN" \
-  --set auth.password="$PASSWORD"
+  --set auth.token="$TOKEN"
 
 # 3. Get the dashboard URL
 oc get route ai-beacon -o jsonpath='https://{.spec.host}'
 ```
 
-Open the dashboard URL in your browser and log in with the password you set above.
+Open the dashboard URL in your browser. You'll be redirected to OpenShift to log in with your Red Hat account, then asked to authorize the dashboard.
 Once inside, click the **rocket icon** in the top bar — the built-in setup guide walks you through downloading the CLI and connecting your first agent.
 Then head to [Agent configuration](#agent-configuration) for optional tuning.
 
