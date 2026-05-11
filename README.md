@@ -44,7 +44,8 @@ The [Developer Sandbox](https://developers.redhat.com/developer-sandbox) is free
 # 1. Set the agent token
 #    The token authenticates agents to the dashboard. Browser login uses
 #    your OpenShift / Red Hat account via the OAuth Proxy sidecar — no
-#    password to manage.
+#    password to manage. Only usernames listed in --set allowedUsers can
+#    sign in; the snippet below allows your current OpenShift user.
 export TOKEN=$(openssl rand -hex 32)
 
 # 2. Install (into your current namespace — the sandbox assigns one for you)
@@ -54,7 +55,8 @@ helm install ai-beacon \
   --set openshift=true \
   --set oauthProxy.enabled=true \
   --set persistence.enabled=false \
-  --set auth.token="$TOKEN"
+  --set auth.token="$TOKEN" \
+  --set allowedUsers="{$(oc whoami)}"
 
 # 3. Get the dashboard URL
 oc get route ai-beacon -o jsonpath='https://{.spec.host}'
