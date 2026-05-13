@@ -24,6 +24,7 @@ Pick a deployment method and follow the steps — the built-in setup guide will 
 | [OpenShift Developer Sandbox](#deploy-to-openshift-developer-sandbox) | Free cloud dashboard, no credit card |
 | [Any Kubernetes cluster](#deploy-to-any-kubernetes-cluster) | Your own cluster with Helm |
 | [Container image](#container-image) | Quick local look without a cluster |
+| [Hugging Face Spaces](#deploy-to-hugging-face-spaces) | Free cloud dashboard gated by your Hugging Face account |
 
 ## Recommended tools
 
@@ -114,6 +115,29 @@ Then head to [Agent configuration](#agent-configuration) for optional tuning.
 > [!IMPORTANT]
 > Mount `/data` to a persistent volume (named volume above, or a bind mount). The agent auth token lives there; without a volume, every container restart regenerates it and silently invalidates the token baked into your installed agent hooks — sessions stop appearing on the dashboard until you re-run `ai-beacon install` with the new token.
 
+## Deploy to Hugging Face Spaces
+
+Hugging Face's free CPU tier accepts arbitrary Docker images and projects the signed-in HF user's identity into the container via OAuth/OIDC — so the dashboard's "who is allowed in" question is answered by your existing Hugging Face account, with no IdP to configure and no password to manage.
+
+The recipe lives in [`huggingface-space/`](huggingface-space/README.md). Push that directory to a fresh Space, set two secrets, restart the Space:
+
+```bash
+# 1. Create a new Space (any owner, any name, SDK: Docker) at
+#    https://huggingface.co/new-space, then clone its empty repo
+git clone https://huggingface.co/spaces/<your-user>/<space-name>
+cp huggingface-space/Dockerfile huggingface-space/entrypoint.sh huggingface-space/README.md <space-name>/
+cd <space-name> && git add . && git commit -m "Deploy ai-beacon" && git push
+
+# 2. In the Space's Settings → Variables and secrets, add two secrets:
+#    AI_BEACON_AUTH_TOKEN       = openssl rand -hex 32  (your agents present this)
+#    AI_BEACON_ALLOWED_USERS    = your-hf-username[,other-hf-username,...]
+#
+# 3. Restart the Space. Open https://<your-user>-<space-name>.hf.space —
+#    you'll be redirected to Hugging Face login, then back to the dashboard.
+```
+
+See [`huggingface-space/README.md`](huggingface-space/README.md) for the full step-by-step, the free-tier caveats, and the env-var → flag mapping. The auth side is covered in [`docs/auth.md`](docs/auth.md#oidc-bring-your-own-idp).
+
 ## Agent configuration
 
 The setup guide covers installing the CLI and connecting to the server.
@@ -130,6 +154,10 @@ Set them in your shell profile (e.g. `~/.zshrc`) so they apply to every session:
 export AI_BEACON_PROJECTS_DIR=~/projects
 export AI_BEACON_DEVICE_NAME=macbook
 ```
+
+## Documentation
+
+For everything beyond the initial deploy and first session — multi-machine setup, auth modes (OIDC, proxy-header), GitHub integration, workflow prompts, the full configuration surface, and troubleshooting — see [`docs/`](docs/README.md).
 
 ## Contributing
 
