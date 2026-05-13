@@ -6,14 +6,48 @@ The in-app **setup guide** (rocket icon, top bar) walks new users through:
 2. Setting `AI_BEACON_URL` and `AI_BEACON_AUTH_TOKEN`, then running `ai-beacon install`.
 3. Verifying with `ai-beacon session -- claude` and watching the session appear on the dashboard.
 
-This page picks up after that. It explains what `install` actually changes, how to rotate or update credentials without re-walking the guide, and what to check when a session doesn't show up.
+This page picks up after that. It documents the download URLs for the six native binaries, explains what `install` actually changes, how to rotate or update credentials without re-walking the guide, and what to check when a session doesn't show up.
 
+- [Native binaries](#native-binaries)
 - [What `ai-beacon install` does](#what-ai-beacon-install-does)
 - [Updating the dashboard URL or token](#updating-the-dashboard-url-or-token)
 - [Running the wrapper without `install`](#running-the-wrapper-without-install)
 - [Uninstalling](#uninstalling)
 - ["Session not appearing" troubleshooting](#session-not-appearing-troubleshooting)
 - [Logs](#logs)
+
+## Native binaries
+
+The in-dashboard setup guide picks the right binary for the operating system and CPU architecture it detects in your browser. The same six artifacts are also available directly from the [`snapshot`](https://github.com/manusa/ai-beacon/releases/tag/snapshot) rolling pre-release — useful if you're installing on a headless machine, scripting fleet onboarding, or you want to verify the asset before downloading.
+
+| OS | Architecture | Asset |
+|------|------|-------|
+| Linux | amd64 | [`ai-beacon-linux-amd64`](https://github.com/manusa/ai-beacon/releases/download/snapshot/ai-beacon-linux-amd64) |
+| Linux | arm64 | [`ai-beacon-linux-arm64`](https://github.com/manusa/ai-beacon/releases/download/snapshot/ai-beacon-linux-arm64) |
+| macOS | amd64 (Intel) | [`ai-beacon-darwin-amd64`](https://github.com/manusa/ai-beacon/releases/download/snapshot/ai-beacon-darwin-amd64) |
+| macOS | arm64 (Apple silicon) | [`ai-beacon-darwin-arm64`](https://github.com/manusa/ai-beacon/releases/download/snapshot/ai-beacon-darwin-arm64) |
+| Windows | amd64 | [`ai-beacon-windows-amd64.exe`](https://github.com/manusa/ai-beacon/releases/download/snapshot/ai-beacon-windows-amd64.exe) |
+| Windows | arm64 | [`ai-beacon-windows-arm64.exe`](https://github.com/manusa/ai-beacon/releases/download/snapshot/ai-beacon-windows-arm64.exe) |
+
+POSIX example:
+
+```bash
+curl -fL -o ai-beacon \
+  https://github.com/manusa/ai-beacon/releases/download/snapshot/ai-beacon-linux-amd64
+chmod +x ai-beacon
+./ai-beacon version
+```
+
+PowerShell example:
+
+```powershell
+Invoke-WebRequest `
+  -Uri https://github.com/manusa/ai-beacon/releases/download/snapshot/ai-beacon-windows-amd64.exe `
+  -OutFile ai-beacon.exe
+.\ai-beacon.exe version
+```
+
+`snapshot` is the rolling pre-release alias that always points at the latest build. A stable release tag will replace it once published.
 
 ## What `ai-beacon install` does
 
