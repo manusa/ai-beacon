@@ -112,6 +112,25 @@ prompt = "/mn-review {pr_url}"
 
 `[workflow.*]` sections override the built-in workflow prompt templates — see [GitHub integration § Workflow prompts](github.md#workflow-prompts).
 
+### Multiple dashboards
+
+Hook events (SessionStart/Stop/Notify/StatusLine) can fan out to additional dashboards in parallel by adding `[[dashboard]]` entries. The top-level `url` / `token_path` remain the **singleton** (the dashboard `ai-beacon install`, the session wrapper, and `ai-beacon heartbeat` work with). Secondary dashboards receive **heartbeats only** — they observe the live session metadata (model, tokens, context %, state, task, branch, PR) but cannot attach a terminal, spawn, kill, or rename the session.
+
+```toml
+url        = "https://butler.example.com"
+token_path = "/Users/you/.config/butler/token"
+
+[[dashboard]]
+url        = "http://localhost:8080"
+token_path = "/Users/you/.config/ai-beacon/token"
+
+[[dashboard]]
+url        = "https://company.example.com"
+token_path = "/Users/you/.config/company/token"
+```
+
+Each entry needs its own dashboard URL and a readable `token_path`. Entries with a missing or unreadable token file are skipped with a warning at hook time — secondaries are never posted unauthenticated. Duplicate URLs (case difference, trailing slash) fold to a single target.
+
 ## Data directory layout
 
 `AI_BEACON_DATA_DIR` (default `~/.config/ai-beacon`) holds:
