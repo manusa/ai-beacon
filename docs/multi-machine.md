@@ -65,10 +65,16 @@ By default the dashboard is a viewer: it surfaces what each agent host reports, 
 Set `AI_BEACON_PROJECTS_DIR` on the agent host before running `ai-beacon install` (or any `ai-beacon session …`):
 
 ```bash
+# Single base directory
 export AI_BEACON_PROJECTS_DIR=~/projects
+
+# Or multiple, path-list style (':' on Unix, ';' on Windows)
+export AI_BEACON_PROJECTS_DIR=~/work:~/oss:~/experiments
 ```
 
 With that set, the host periodically reports its discovered repositories. The dashboard shows them under that device's "Spawn new session" picker; selecting one launches `ai-beacon session -- claude` (or your configured agent) inside the repo. The spawn request goes through the existing agent → server WebSocket — no new ports to open, no SSH involved.
+
+With multiple roots configured, the picker groups projects per root so the device's `~/work` and `~/oss` trees don't collide.
 
 If `AI_BEACON_PROJECTS_DIR` is unset on a host, that host's row stays read-only on the dashboard. You can still watch and attach to terminals, just not spawn.
 
@@ -118,4 +124,4 @@ PR state is re-fetched at exit, so a PR merged moments before the session ends s
 **Mixed OS (macOS + Linux + Windows).**
 
 - Same token, same `AI_BEACON_URL` on each. The binaries are per-platform — see the download step in the in-app setup guide on the dashboard.
-- Windows paths in `AI_BEACON_PROJECTS_DIR` work too (`C:\Users\you\projects`); set via PowerShell `$env:AI_BEACON_PROJECTS_DIR`.
+- Windows paths in `AI_BEACON_PROJECTS_DIR` work too (`C:\Users\you\projects`); set via PowerShell `$env:AI_BEACON_PROJECTS_DIR`. Use `;` as the separator for multiple roots on Windows: `C:\work;C:\oss`.

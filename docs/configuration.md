@@ -17,7 +17,7 @@ These apply to the machine running the wrapped coding agent (`ai-beacon session 
 | `AI_BEACON_URL` | Dashboard server URL. | `http://localhost:8080` |
 | `AI_BEACON_AUTH_TOKEN` | Bearer token for agent → dashboard heartbeats. The dashboard generates this on first boot; copy it from the setup guide. | _(required)_ |
 | `AI_BEACON_DEVICE_NAME` | Friendly device name shown on session cards and the device-grouped grid. | hostname |
-| `AI_BEACON_PROJECTS_DIR` | Base directory of your repositories. Enables the dashboard's "spawn new session" flow and worktree workflows. Disabled when unset. | _(unset)_ |
+| `AI_BEACON_PROJECTS_DIR` | Base directories of your repositories. Enables the dashboard's "spawn new session" flow and worktree workflows. Accepts a single path or a list joined by the OS path separator (`:` on Unix, `;` on Windows) for multiple roots — e.g. `~/work:~/oss`. Disabled when unset. | _(unset)_ |
 | `AI_BEACON_WORKTREE_LOCATION` | Where new worktrees are created relative to the source repo. `sibling` (default) places them next to the repo; `subdirectory` places them inside it. | `sibling` |
 | `AI_BEACON_LOG_FILE` | Override the log file location. Absolute path, or a bare filename rooted under `<data-dir>/logs/`. | _(unset, logs to data dir)_ |
 
@@ -27,7 +27,7 @@ Set these in your shell profile (`~/.zshrc`, `~/.bashrc`, etc.) so every session
 export AI_BEACON_URL=https://ai-beacon.example.com
 export AI_BEACON_AUTH_TOKEN=…
 export AI_BEACON_DEVICE_NAME=macbook
-export AI_BEACON_PROJECTS_DIR=~/projects
+export AI_BEACON_PROJECTS_DIR=~/work:~/oss
 ```
 
 `ai-beacon install` persists `AI_BEACON_URL` and `AI_BEACON_AUTH_TOKEN` into the config file, so hooks keep working even if the env vars aren't exported from the shell that launches the agent. See [Connecting an agent](connect-agent.md).
@@ -41,7 +41,7 @@ export AI_BEACON_PROJECTS_DIR=~/projects
 | `--dashboard-url <url>` | Override `$AI_BEACON_URL` for this run. |
 | `--device <name>` | Override `$AI_BEACON_DEVICE_NAME`. |
 | `--project <dir>` | Project directory shown on the session card. Defaults to the current working directory. |
-| `--projects-dir <dir>` | Override `$AI_BEACON_PROJECTS_DIR`. |
+| `--projects-dir <dirs>` | Override `$AI_BEACON_PROJECTS_DIR`. Accepts a single path or a list joined by `:` (Unix) / `;` (Windows) for multiple roots. |
 | `--worktree-location sibling\|subdirectory` | Override `$AI_BEACON_WORKTREE_LOCATION`. |
 | `--session-id <uuid>` | Pre-assign a session ID. By default a UUID is generated. |
 | `--log-file <path>` | Override `$AI_BEACON_LOG_FILE`. |
@@ -99,6 +99,11 @@ A few footguns worth surfacing here:
 url         = "https://ai-beacon.example.com"
 token_path  = "/Users/you/.config/ai-beacon/token"
 binary_path = "/Users/you/.local/bin/ai-beacon"
+
+# Single base directory (legacy):
+# projects_dir = "/Users/you/projects"
+# Multiple base directories (path-list semantics, but as a TOML array):
+projects_dirs = ["/Users/you/work", "/Users/you/oss"]
 
 [workflow.implement_issue]
 prompt = """
