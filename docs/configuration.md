@@ -32,6 +32,8 @@ export AI_BEACON_PROJECTS_DIR=~/work:~/oss
 
 `ai-beacon install` persists `AI_BEACON_URL` and `AI_BEACON_AUTH_TOKEN` into the config file, so hooks keep working even if the env vars aren't exported from the shell that launches the agent. See [Connecting an agent](connect-agent.md).
 
+**Symlinks and case.** The agent resolves symlinks before validating each `cwd` it accepts from the dashboard, so a symlink that points outside a configured root is rejected even if it lives lexically inside one. Path comparison matches the host filesystem: case-insensitive on macOS and Windows, case-sensitive on Linux — a dashboard-echoed `cwd` that differs only in case from the configured root validates on macOS/Windows and is rejected on Linux.
+
 ### Session-command flags
 
 `ai-beacon session -- <agent-cmd>` accepts these (most have an env-var fallback above):

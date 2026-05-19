@@ -74,9 +74,11 @@ export AI_BEACON_PROJECTS_DIR=~/work:~/oss:~/experiments
 
 With that set, the host periodically reports its discovered repositories. The dashboard shows them under that device's "Spawn new session" picker; selecting one launches `ai-beacon session -- claude` (or your configured agent) inside the repo. The spawn request goes through the existing agent → server WebSocket — no new ports to open, no SSH involved.
 
-With multiple roots configured, the picker groups projects per root so the device's `~/work` and `~/oss` trees don't collide.
+With multiple roots configured, the picker groups projects per root so the device's `~/work` and `~/oss` trees don't collide. The picker's filter field matches both project names and the root's path — typing `oss` scopes the list to projects under `~/oss` without needing to know any project name.
 
 If `AI_BEACON_PROJECTS_DIR` is unset on a host, that host's row stays read-only on the dashboard. You can still watch and attach to terminals, just not spawn.
+
+**Symlinks and case.** Each configured root and the `cwd` the dashboard echoes back are passed through symlink resolution before the agent accepts them, so a symlink that lives lexically inside a root but points outside (e.g. `~/work/escape → /etc`) is rejected. Path comparison matches the host filesystem: case-insensitive on macOS and Windows, case-sensitive on Linux. If you set `AI_BEACON_PROJECTS_DIR=~/Work` on macOS, the dashboard can echo back `~/work` and the spawn still validates; on Linux the cases must match.
 
 ## Worktrees
 
