@@ -47,6 +47,8 @@ export AI_BEACON_PROJECTS_DIR=~/work:~/oss
 | `--worktree-location sibling\|subdirectory` | Override `$AI_BEACON_WORKTREE_LOCATION`. |
 | `--session-id <uuid>` | Pre-assign a session ID. By default a UUID is generated. |
 | `--log-file <path>` | Override `$AI_BEACON_LOG_FILE`. |
+| `--capture-bytes <dir>` | Capture raw byte streams under `<dir>`: `agent-pty.bin` (pre-compositor PTY chunks), `local-stdout.bin` (post-compositor terminal output), `events.jsonl` (timing/resize), and `manifest.json`. Useful when reporting terminal rendering issues (especially Windows ConPTY); share the directory with maintainers so the session can be replayed offline. Each session overwrites `<dir>`, so this flag fits a single targeted capture; for recurring capture use `--capture-bytes-auto-routed`. |
+| `--capture-bytes-auto-routed` | Capture each session into its own subdirectory at `<data-dir>/sessions/agent-session-<id>.capture/`, keeping the 45 most recent runs (older runs are pruned automatically). Use when you want to leave capture on across several sessions (add the flag to your launcher script, reproduce a few sessions, then remove it). Wins over `--capture-bytes` if both are set. |
 
 Flags marked `(internal)` in `--help` are populated by the dashboard when it spawns a session and aren't intended for direct invocation.
 
