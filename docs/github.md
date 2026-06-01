@@ -58,7 +58,7 @@ The dashboard's session-spawn UI exposes two workflows out of the box:
 | Workflow | Trigger | What the agent receives as its initial prompt |
 |----------|---------|------------------------------------------------|
 | **Implement Issue** | Pick an issue from the GitHub picker, click *Implement* | A multi-step plan-then-implement template with TDD enforcement, ask-before-assume gate, scope guard, and multi-persona peer review |
-| **Review PR** | Pick a PR, click *Review* | A code-review template that walks the diff, raises blockers, and produces a summary |
+| **Review PR** | Pick a PR, click *Review* | A code-review template that walks the diff, raises blockers, and produces a summary. It **presents the full review for your approval and posts nothing to GitHub until you explicitly sign off** |
 
 The full built-in templates are non-trivial — they encode several engineering-discipline guardrails that took real iteration to land. You usually don't need to touch them.
 
