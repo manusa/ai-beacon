@@ -62,6 +62,8 @@ The dashboard's session-spawn UI exposes two workflows out of the box:
 
 The full built-in templates are non-trivial — they encode several engineering-discipline guardrails that took real iteration to land. You usually don't need to touch them.
 
+To save the agent its first turn, the issue/PR body and discussion are **preloaded into the prompt at spawn time** (fetched on the agent host with your `gh` credentials) and fenced as untrusted data. The built-in templates still keep the `gh … view` command as a refresh/fallback, so if the preload can't be fetched the agent loads it itself — you'll see a brief *"Couldn't preload … details"* note and a small marker on the session card, and nothing else changes.
+
 ### Customizing a workflow
 
 If you do want to tweak one, override the prompt in `~/.config/ai-beacon/config.toml` on the **agent host**:
@@ -88,8 +90,10 @@ The following placeholders are substituted at spawn time:
 | `{pr_number}` | PR number |
 | `{repo}` | `owner/repo` derived from the issue or PR URL |
 | `{branch}` | Branch name being worked on |
+| `{issue_context}` | The issue body + comments, preloaded at spawn (empty if it couldn't be fetched) |
+| `{pr_context}` | The PR body + comments + reviews, preloaded at spawn (empty if it couldn't be fetched) |
 
-Missing placeholders are left as the literal `{placeholder}` so the signal is visible to the agent rather than silently dropped. The override applies to every session spawned on the host that owns the `config.toml`. Removing the section restores the built-in default on the next session.
+Missing placeholders are left as the literal `{placeholder}` so the signal is visible to the agent rather than silently dropped — except `{issue_context}` / `{pr_context}`, which collapse to nothing when their content couldn't be preloaded (so your template never shows a stray token). The override applies to every session spawned on the host that owns the `config.toml`. Removing the section restores the built-in default on the next session.
 
 ### Bypassing the workflow
 
