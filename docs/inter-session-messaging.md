@@ -21,16 +21,19 @@ it knows the message came from another session, relayed by you — and continues
 working on it. No command needed on the receiving side.
 
 If the target is vague or ambiguous, your agent can list the reachable sessions
-to pick the right one, or you can qualify a duplicate name by device — for
-example `reviewer@blog`.
+to pick the right one, or you can qualify a duplicate name by project or device
+— for example `reviewer@blog`. When several sessions share one repo on one machine,
+your agent asks you which one you mean rather than guessing.
 
 Replies come back the same way: the recipient can "tell" you back through the
 same path, and the exchange stays threaded.
 
 ## Good to know
 
-- **Discovery.** Sessions are addressed by their handle (custom name or project),
-  so you refer to them the way you already think of them; UUIDs never come up.
+- **Discovery.** You address sessions by their handle (custom name or project),
+  so you refer to them the way you already think of them. Agents use each session's
+  id under the hood (to reply, and to tell apart two sessions on one repo), but you
+  never have to type one.
 - **Busy recipients.** If the target session is mid-task, the message waits and is
   delivered the moment it returns to its prompt — never dropped, never injected
   mid-turn.

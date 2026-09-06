@@ -127,3 +127,4 @@ PR state is re-fetched at exit, so a PR merged moments before the session ends s
 
 - Same token, same `AI_BEACON_URL` on each. The binaries are per-platform — see the download step in the in-app setup guide on the dashboard.
 - Windows paths in `AI_BEACON_PROJECTS_DIR` work too (`C:\Users\you\projects`); set via PowerShell `$env:AI_BEACON_PROJECTS_DIR`. Use `;` as the separator for multiple roots on Windows: `C:\work;C:\oss`.
+- Spawning a new session from the dashboard works on Windows whenever **Windows Terminal is installed**. The spawn opens a fresh Windows Terminal window running the new session, so it works even if the agent is running in a classic console (it is no longer conditional on launching the agent from a Windows Terminal tab). Bringing an existing session's window to the front ("focus") is macOS/Linux-only for now.

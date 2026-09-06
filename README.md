@@ -217,6 +217,7 @@ These additional environment variables are optional but useful:
 |----------|---------|---------|
 | `AI_BEACON_PROJECTS_DIR` | Base directories for your repositories — enables spawning new sessions and worktree workflows from the dashboard. Accepts one path or a list joined by the OS path separator (`:` on Unix, `;` on Windows) | _(disabled)_ |
 | `AI_BEACON_DEVICE_NAME` | Friendly name shown in the dashboard for this machine | hostname |
+| `AI_BEACON_JIRA_URL` | Jira instance base URL — enables pasting a Jira ticket into the *Implement Issue* workflow. Pair with `AI_BEACON_JIRA_TOKEN` (plus `AI_BEACON_JIRA_EMAIL` on Atlassian Cloud); generic `JIRA_URL`/`JIRA_USER`/`JIRA_TOKEN` are read as fallbacks. See [Jira tickets](docs/configuration.md#jira-tickets). | _(disabled)_ |
 
 Set them in your shell profile (e.g. `~/.zshrc`) so they apply to every session:
 

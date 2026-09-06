@@ -33,7 +33,7 @@ That's it — there are no AI Beacon env vars to set. The agent calls `gh auth t
 
 | Element | Source |
 |---------|--------|
-| **Repo link** (clickable project name) | The repo your session is working in. Built from the heartbeat's `github_owner` / `github_repo`. |
+| **Repo link** (clickable project name) | The repo your session is working in. Built from the heartbeat's `forge_owner` / `forge_repo`. |
 | **Fork glyph** | Rendered next to the repo link when an `upstream` remote is detected. See [Forks and upstreams](#forks-and-upstreams). |
 | **PR chip** (`#42 · Ready`, etc.) | Live state from `gh pr view`. Priority order: Merged → Closed → Draft → Failing → Ready → Pending. |
 
@@ -57,12 +57,21 @@ The dashboard's session-spawn UI exposes two workflows out of the box:
 
 | Workflow | Trigger | What the agent receives as its initial prompt |
 |----------|---------|------------------------------------------------|
-| **Implement Issue** | Pick an issue from the GitHub picker, click *Implement* | A multi-step plan-then-implement template with TDD enforcement, ask-before-assume gate, scope guard, and multi-persona peer review |
-| **Review PR** | Pick a PR, click *Review* | A code-review template that walks the diff, raises blockers, and produces a summary. It **presents the full review for your approval and posts nothing to GitHub until you explicitly sign off** |
+| **Implement Issue** | Pick an issue from the picker (search or paste its URL), click *Implement* | A multi-step plan-then-implement template with TDD enforcement, ask-before-assume gate, scope guard, and multi-persona peer review |
+| **Review PR** | Pick a PR (search or paste its URL), click *Review* | A code-review template that walks the diff, raises blockers, and produces a summary. It **presents the full review for your approval and posts nothing to GitHub until you explicitly sign off** |
+
+Two things the *Review PR* template does on your machine are worth knowing about:
+
+- **It may build and test before reviewing.** If your working tree holds the change under review, the agent builds it and runs the tests covering the changed area **once**, up front, and shares that result with its reviewers instead of each of them re-running it. If the tree is on the base branch (the default — the worktree toggle is off), it skips the build rather than baselining unrelated code. It will **not** build or test a change it doesn't trust — an unfamiliar author, or a diff touching build/test scripts, CI config, or `CLAUDE.md`/`AGENTS.md` — and asks you first instead.
+- **A red baseline stops the review.** If the build or those tests fail on their own, the agent stops and asks whether to continue, rather than issuing verdicts over a broken tree. That is a second point (besides the post-approval gate) where it waits for you.
 
 The full built-in templates are non-trivial — they encode several engineering-discipline guardrails that took real iteration to land. You usually don't need to touch them.
 
 To save the agent its first turn, the issue/PR body and discussion are **preloaded into the prompt at spawn time** (fetched on the agent host with your `gh` credentials) and fenced as untrusted data. The built-in templates still keep the `gh … view` command as a refresh/fallback, so if the preload can't be fetched the agent loads it itself — you'll see a brief *"Couldn't preload … details"* note and a small marker on the session card, and nothing else changes.
+
+If the forge CLI isn't installed or authenticated for the project's remote, no workflow can run there — the dialog says so and gives you the command to run on the agent machine: `gh auth login` for github.com, and for any other host, `glab auth login --hostname <host>` *if that host runs GitLab*. The hostname alone doesn't say which forge is behind it, so anywhere off github.com the command is offered conditionally: GitHub Enterprise, Gitea and Bitbucket aren't supported, and logging `glab` into one of them would mislabel the project as GitLab.
+
+> **GitLab.** The same two workflows work on a GitLab checkout when the [`glab` CLI](https://gitlab.com/gitlab-org/cli) is installed and authenticated (`glab auth login`) for the project's host, including self-managed instances. The prompt is forge-accurate: it uses `glab` commands (`glab issue view`, `glab mr view`/`diff`, and `glab mr note` for posting a review), says "merge request" / `!123`, and preloads the issue/MR body plus discussion notes via `glab api`. GitLab has no inline-comment review, so the *Review MR* post is a single MR note with the file:line references in its body. In the spawn dialog you can search GitLab issues/MRs or paste an issue/MR URL (self-managed hosts included); on a GitLab project the picker brands its copy to "merge request" / `!123` (and the card to *Review MR*), and it ignores a pasted GitHub PR URL. Everything else — the guardrails, the consent gate, the placeholders — is identical.
 
 ### Customizing a workflow
 
@@ -88,7 +97,7 @@ The following placeholders are substituted at spawn time:
 | `{issue_title}` | Issue title |
 | `{pr_url}` | Full PR URL |
 | `{pr_number}` | PR number |
-| `{repo}` | `owner/repo` derived from the issue or PR URL |
+| `{repo}` | `owner/repo` (GitHub) or `group/…/project` (GitLab) derived from the issue or PR URL |
 | `{branch}` | Branch name being worked on |
 | `{issue_context}` | The issue body + comments, preloaded at spawn (empty if it couldn't be fetched) |
 | `{pr_context}` | The PR body + comments + reviews, preloaded at spawn (empty if it couldn't be fetched) |
