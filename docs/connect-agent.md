@@ -54,7 +54,7 @@ Invoke-WebRequest `
 `install` is idempotent — it can be re-run any time. It performs three steps:
 
 1. **Resolves the dashboard URL and auth token.** Precedence: `--url` flag → `$AI_BEACON_URL` → existing `config.toml` → `http://localhost:8080`. The token follows the same chain, ending at `$AI_BEACON_AUTH_TOKEN`. If a token is provided, it's written to `<data-dir>/token` (mode `0600`).
-2. **Writes `config.toml`.** Stored at `<data-dir>/config.toml` (default `~/.config/ai-beacon/config.toml`). Records the URL, the path to the token file, and the absolute path of the `ai-beacon` binary itself.
+2. **Writes `config.toml`.** Stored at `<data-dir>/config.toml` (see [Data directory layout](configuration.md#data-directory-layout) for the per-OS location). Records the URL, the path to the token file, and the absolute path of the `ai-beacon` binary itself.
 3. **Installs hooks for each registered agent plugin.** For Claude Code, this means editing `~/.claude/settings.json` so each `claude` invocation transparently wraps itself in `ai-beacon session`. Hooks are tagged with the `# ai-beacon-managed` marker so `uninstall` can find and remove them without disturbing your own edits.
 
 After install, running the agent normally (`claude`) is equivalent to `ai-beacon session -- claude`. No env vars need to be exported in the agent's shell — the hook reads them from `config.toml`.
@@ -73,7 +73,7 @@ ai-beacon install --yes
 
 Hooks pick up the new values on the next session. No restart of running sessions is needed; long-running sessions keep their cached token until they reconnect.
 
-> The current token is stored at `<data-dir>/token`, owned by your user, mode `0600`. To inspect: `cat ~/.config/ai-beacon/token`. Never check this file in.
+> The current token is stored at `<data-dir>/token`, owned by your user, mode `0600`. Inspect it with `cat`, and never check this file in.
 
 ## Running the wrapper without `install`
 
@@ -127,7 +127,8 @@ Walk these in order — they cover ~90% of cases.
 2. **Confirm the token is current.**
 
    ```bash
-   cat ~/.config/ai-beacon/token
+   cat ~/.config/ai-beacon/token                         # Linux
+   cat ~/Library/Application\ Support/ai-beacon/token    # macOS
    ```
 
    Compare it to the **Install** step of the setup guide on the dashboard. The most common cause of "everything looks fine but nothing shows up" is a container deployment with no persistent volume — every restart regenerates a fresh token and silently invalidates the one baked into your installed hooks. Either re-run `ai-beacon install` with the new token, or — preferably — mount `/data` to a persistent volume so the token survives restarts (see the [main README](../README.md)'s container instructions and the chart's `persistence.enabled` value).
@@ -153,4 +154,4 @@ Logs are written to `<data-dir>/logs/` by default. The session command suppresse
 | `--log-file <path>` | Absolute path writes there directly. Bare filename roots it under `<data-dir>/logs/`. |
 | `$AI_BEACON_LOG_FILE` | Same as the flag; flag wins when both are set. |
 
-For an active session, `tail -F ~/.config/ai-beacon/logs/<session>.log` will surface heartbeat failures, auth issues, and reconnect attempts in real time.
+For an active session, `tail -F <data-dir>/logs/<session>.log` will surface heartbeat failures, auth issues, and reconnect attempts in real time.

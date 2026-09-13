@@ -21,6 +21,7 @@ These apply to the machine running the wrapped coding agent (`ai-beacon session 
 | `AI_BEACON_WORKTREE_LOCATION` | Where new worktrees are created relative to the source repo. `sibling` (default) places them next to the repo; `subdirectory` places them inside it. | `sibling` |
 | `AI_BEACON_BAR_COST` | Whether the local terminal status bar shows the session cost. Set to `off`, `0`, or `false` to hide it (context usage is unaffected) — handy when pairing, screen-sharing, or recording. `--hide-cost` overrides this. | show |
 | `AI_BEACON_LOG_FILE` | Override the log file location. Absolute path, or a bare filename rooted under `<data-dir>/logs/`. | _(unset, logs to data dir)_ |
+| `AI_BEACON_DATA_DIR` | Directory for `config.toml`, the auth token, logs, and session data. Used by every `ai-beacon` command. Must be an absolute path. See [Data directory layout](#data-directory-layout). | _(platform config dir)_ |
 | `AI_BEACON_JIRA_URL` | Jira instance base URL (e.g. `https://acme.atlassian.net`, or `https://jira.example.com/jira` for a Data Center install under a subfolder). Enables pasting a Jira ticket into the *Implement Issue* workflow. Disabled when unset. Falls back to a generic `JIRA_URL` if unset — but it is **never** inferred from the ticket URL you paste. | _(unset)_ |
 | `AI_BEACON_JIRA_EMAIL` | Your Atlassian account email. Set it for **Atlassian Cloud** (the API token is used as a Basic-auth password); leave it unset for **Data Center**, where the token is sent as a Bearer PAT. Falls back to a generic `JIRA_USER` if unset. | _(unset)_ |
 | `AI_BEACON_JIRA_TOKEN` | Jira API token. Prefer `jira_token_path` in the config file so the secret stays in a file rather than your shell environment. Falls back to a generic `JIRA_TOKEN` if unset. | _(unset)_ |
@@ -35,6 +36,8 @@ export AI_BEACON_PROJECTS_DIR=~/work:~/oss
 ```
 
 `ai-beacon install` persists `AI_BEACON_URL` and `AI_BEACON_AUTH_TOKEN` into the config file, so hooks keep working even if the env vars aren't exported from the shell that launches the agent. See [Connecting an agent](connect-agent.md).
+
+Sessions you start from the dashboard inherit the environment of the ai-beacon session already running on that machine. See [Multi-machine setup § Environment of dashboard-started sessions](multi-machine.md#environment-of-dashboard-started-sessions).
 
 **Symlinks and case.** The agent resolves symlinks before validating each `cwd` it accepts from the dashboard, so a symlink that points outside a configured root is rejected even if it lives lexically inside one. Path comparison matches the host filesystem: case-insensitive on macOS and Windows, case-sensitive on Linux — a dashboard-echoed `cwd` that differs only in case from the configured root validates on macOS/Windows and is rejected on Linux.
 
@@ -80,7 +83,7 @@ These apply to the machine running `ai-beacon server` (or the container / pod).
 |----------|---------|---------|
 | `AI_BEACON_AUTH_TOKEN` | Agent bearer token the server validates. When unset, the server generates a 64-hex-char token and writes it to `<data-dir>/token`. | _(auto-generated)_ |
 | `AI_BEACON_AUTH_PASSWORD` | Browser login password (default auth mode). When unset, generated and written to `<data-dir>/password`. | _(auto-generated)_ |
-| `AI_BEACON_DATA_DIR` | Where the server keeps the auth token, password, logs, and (future) session history. | `~/.config/ai-beacon` |
+| `AI_BEACON_DATA_DIR` | Directory for `config.toml`, the auth token, password, logs, and session data. Must be an absolute path. See [Data directory layout](#data-directory-layout). | _(platform config dir)_ |
 | `AI_BEACON_ALLOWED_USERS` | Comma-separated allowlist of usernames permitted to sign in. Required by OIDC and proxy-header modes. | _(unset)_ |
 | `AI_BEACON_OIDC_ISSUER` | OIDC issuer URL (e.g. `https://accounts.google.com`). | _(unset)_ |
 | `AI_BEACON_OIDC_CLIENT_ID` | OIDC client ID. | _(unset)_ |
@@ -99,7 +102,7 @@ These apply to the machine running `ai-beacon server` (or the container / pod).
 | `--auth <mode>` | `""` (password, default), `none`, `proxy-header`, or `oidc`. | `""` |
 | `--auth-token <token>` | Agent bearer token (overrides `$AI_BEACON_AUTH_TOKEN`). | _(env / generated)_ |
 | `--password-file <path>` | Read the browser password from a file instead of env / data dir. | _(unset)_ |
-| `--data-dir <path>` | Override `$AI_BEACON_DATA_DIR`. | `~/.config/ai-beacon` |
+| `--data-dir <path>` | Override `$AI_BEACON_DATA_DIR`. | _(env / platform config dir)_ |
 | `--trusted-proxies <cidrs>` | CIDRs whose immediate-peer requests are trusted to relay `X-Forwarded-*`. Required by `--auth=proxy-header`. | _(empty, trust none)_ |
 | `--allowed-users <names>` | Sign-in allowlist (overrides `$AI_BEACON_ALLOWED_USERS`). Required by `--auth=proxy-header` and `--auth=oidc`. | _(env / unset)_ |
 | `--oidc-issuer`, `--oidc-client-id`, `--oidc-client-secret`, `--oidc-client-secret-file`, `--oidc-scopes`, `--oidc-redirect-url`, `--oidc-display-name` | OIDC configuration. Each falls back to the matching `AI_BEACON_OIDC_*` env var. See [Authentication](auth.md). | — |
@@ -121,7 +124,7 @@ A few footguns worth surfacing here:
 
 ```toml
 url         = "https://ai-beacon.example.com"
-token_path  = "/Users/you/.config/ai-beacon/token"
+token_path  = "/Users/you/Library/Application Support/ai-beacon/token"
 binary_path = "/Users/you/.local/bin/ai-beacon"
 
 # Single base directory (legacy):
@@ -134,7 +137,7 @@ projects_dirs = ["/Users/you/work", "/Users/you/oss"]
 # agent process. Omit jira_email on a Data Center instance (Bearer PAT).
 # jira_url        = "https://acme.atlassian.net"
 # jira_email      = "you@example.com"
-# jira_token_path = "/Users/you/.config/ai-beacon/jira-token"
+# jira_token_path = "/Users/you/Library/Application Support/ai-beacon/jira-token"
 
 [workflow.implement_issue]
 prompt = """
@@ -158,7 +161,7 @@ token_path = "/Users/you/.config/butler/token"
 
 [[dashboard]]
 url        = "http://localhost:8080"
-token_path = "/Users/you/.config/ai-beacon/token"
+token_path = "/Users/you/Library/Application Support/ai-beacon/token"
 
 [[dashboard]]
 url        = "https://company.example.com"
@@ -169,7 +172,15 @@ Each entry needs its own dashboard URL and a readable `token_path`. Entries with
 
 ## Data directory layout
 
-`AI_BEACON_DATA_DIR` (default `~/.config/ai-beacon`) holds:
+Every `ai-beacon` command (the server, `session`, `install`, and the installed hooks) uses the same data directory. That is where the agent finds `config.toml`, and so your dashboard URL and auth token. The first of these that applies wins:
+
+1. `AI_BEACON_DATA_DIR` (or `--data-dir` on `ai-beacon server`). It must be an absolute path; a relative value is rejected with an error. `~` is expanded only by your shell, so write the full path in a quoted value, a `.env` file, or a Docker `-e` flag.
+2. `$XDG_CONFIG_HOME/ai-beacon`, when `XDG_CONFIG_HOME` is set (on any OS).
+3. The platform config directory: `~/.config/ai-beacon` on Linux, `~/Library/Application Support/ai-beacon` on macOS, `%AppData%\ai-beacon` on Windows.
+
+The container image sets `AI_BEACON_DATA_DIR=/data`.
+
+The directory holds:
 
 | Path | Contents |
 |------|----------|
@@ -178,3 +189,4 @@ Each entry needs its own dashboard URL and a readable `token_path`. Entries with
 | `jira-token` | Jira API token, if you point `jira_token_path` here. Create it yourself with mode `0600`. |
 | `password` | Browser login password (file mode `0600`). Server-side only. |
 | `logs/` | Log files. `ai-beacon session …` writes here unless `--log-file` overrides. |
+| `sessions/` | Per-session metadata, plus captures from `--capture-bytes-auto-routed`. |

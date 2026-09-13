@@ -41,7 +41,8 @@ AI_BEACON_AUTH_PASSWORD=changeme ai-beacon server
 If `AI_BEACON_AUTH_PASSWORD` is unset and no `--password-file` is given, a random 64-hex-char password is generated and written to `<data-dir>/password` on first boot. Retrieve it with:
 
 ```bash
-cat ~/.config/ai-beacon/password                                # local
+cat ~/.config/ai-beacon/password                                 # local, Linux
+cat ~/Library/Application\ Support/ai-beacon/password            # local, macOS
 kubectl exec -n ai-beacon deploy/ai-beacon -- cat /data/password # Helm
 ```
 

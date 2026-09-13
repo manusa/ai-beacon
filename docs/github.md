@@ -75,7 +75,7 @@ If the forge CLI isn't installed or authenticated for the project's remote, no w
 
 ### Customizing a workflow
 
-If you do want to tweak one, override the prompt in `~/.config/ai-beacon/config.toml` on the **agent host**:
+If you do want to tweak one, override the prompt in `config.toml` (in the [data directory](configuration.md#data-directory-layout)) on the **agent host**:
 
 ```toml
 [workflow.implement_issue]

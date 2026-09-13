@@ -8,6 +8,8 @@ This page covers the three parts of that setup: naming machines, pointing them a
 - [Naming devices](#naming-devices)
 - [Sharing one token across hosts](#sharing-one-token-across-hosts)
 - [Spawning sessions from the dashboard](#spawning-sessions-from-the-dashboard)
+  - [Environment of dashboard-started sessions](#environment-of-dashboard-started-sessions)
+  - [Platform requirements](#platform-requirements)
 - [Worktrees](#worktrees)
   - [Cleanup on session exit](#cleanup-on-session-exit)
 - [Common patterns](#common-patterns)
@@ -36,7 +38,7 @@ Every session reports a device name in its heartbeats, and the dashboard groups 
 
 1. `--device <name>` on `ai-beacon session`.
 2. `$AI_BEACON_DEVICE_NAME`.
-3. `device_name` in `~/.config/ai-beacon/config.toml`.
+3. `device_name` in `config.toml` (in the [data directory](configuration.md#data-directory-layout)).
 4. The system hostname.
 5. Literal `"unknown"`.
 
@@ -48,7 +50,7 @@ Duplicate names across hosts are allowed and the dashboard merges them into one 
 
 ## Sharing one token across hosts
 
-The agent token (`AI_BEACON_AUTH_TOKEN`) is the same on every host — the server generates one PSK at first boot and every agent presents that same value. Copy it to each machine via your usual secret-sharing channel (1Password, password manager, `ssh agent-host 'echo … > ~/.config/ai-beacon/token'`, etc.) and run `ai-beacon install` there.
+The agent token (`AI_BEACON_AUTH_TOKEN`) is the same on every host — the server generates one PSK at first boot and every agent presents that same value. Copy it to each machine via your usual secret-sharing channel (1Password, password manager, `ssh agent-host 'echo … > <data-dir>/token'`, etc.) and run `ai-beacon install` there.
 
 There is no per-user token rotation today — PSK is the only agent auth mode in the standalone server. Rotating means generating a new token on the server and re-running `install` on every agent host.
 
@@ -79,6 +81,20 @@ With multiple roots configured, the picker groups projects per root so the devic
 If `AI_BEACON_PROJECTS_DIR` is unset on a host, that host's row stays read-only on the dashboard. You can still watch and attach to terminals, just not spawn.
 
 **Symlinks and case.** Each configured root and the `cwd` the dashboard echoes back are passed through symlink resolution before the agent accepts them, so a symlink that lives lexically inside a root but points outside (e.g. `~/work/escape → /etc`) is rejected. Path comparison matches the host filesystem: case-insensitive on macOS and Windows, case-sensitive on Linux. If you set `AI_BEACON_PROJECTS_DIR=~/Work` on macOS, the dashboard can echo back `~/work` and the spawn still validates; on Linux the cases must match.
+
+### Environment of dashboard-started sessions
+
+A session you start from the dashboard inherits the environment of the ai-beacon session already running on that machine, so API keys (`ANTHROPIC_API_KEY`, `GH_TOKEN`), proxy settings and `PATH` carry over. If you change an exported variable in your shell profile, restart that running session so new ones pick up the change.
+
+A few variables are left out: terminal-specific ones such as `TERM` and `TMUX` (the new terminal sets its own), `AI_BEACON_LOG_FILE` (each session writes its own log), and server settings such as `AI_BEACON_AUTH_PASSWORD`, `AI_BEACON_ALLOWED_USERS` and `AI_BEACON_OIDC_*`.
+
+Everything forwarded is visible to the agent. For Jira, [`jira_token_path`](configuration.md#jira-tickets) keeps the token out of the session's environment.
+
+### Platform requirements
+
+**macOS: allow Automation.** If your terminal is Ghostty, Terminal, or a JetBrains IDE (whose new sessions open in Terminal), ai-beacon opens new sessions by scripting that app; with Ghostty, each one opens as a window of the instance you already have running. macOS asks for permission the first time. Allow it: both starting sessions and bringing a session's window to the front depend on it. If you denied it, starting a session fails with an error such as `Not authorized to send Apple events to Ghostty. (-1743)`; turn it back on under **System Settings → Privacy & Security → Automation**.
+
+**Windows: install Windows Terminal.** Starting a session opens a new Windows Terminal window, so it works even when the running agent is in a classic console. Bringing an existing session's window to the front is macOS/Linux-only for now.
 
 ## Worktrees
 
@@ -127,4 +143,4 @@ PR state is re-fetched at exit, so a PR merged moments before the session ends s
 
 - Same token, same `AI_BEACON_URL` on each. The binaries are per-platform — see the download step in the in-app setup guide on the dashboard.
 - Windows paths in `AI_BEACON_PROJECTS_DIR` work too (`C:\Users\you\projects`); set via PowerShell `$env:AI_BEACON_PROJECTS_DIR`. Use `;` as the separator for multiple roots on Windows: `C:\work;C:\oss`.
-- Spawning a new session from the dashboard works on Windows whenever **Windows Terminal is installed**. The spawn opens a fresh Windows Terminal window running the new session, so it works even if the agent is running in a classic console (it is no longer conditional on launching the agent from a Windows Terminal tab). Bringing an existing session's window to the front ("focus") is macOS/Linux-only for now.
+- Spawning from the dashboard on Windows needs Windows Terminal; see [Platform requirements](#platform-requirements).
