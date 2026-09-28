@@ -13,6 +13,7 @@ This page picks up after that. It documents the download URLs for the six native
 - [Updating the dashboard URL or token](#updating-the-dashboard-url-or-token)
 - [Running the wrapper without `install`](#running-the-wrapper-without-install)
 - [Uninstalling](#uninstalling)
+- [Windows consoles and raw escape codes](#windows-consoles-and-raw-escape-codes)
 - ["Session not appearing" troubleshooting](#session-not-appearing-troubleshooting)
 - [Logs](#logs)
 
@@ -111,6 +112,14 @@ By default this removes hooks and leaves the binary and data directory in place 
 | `--yes` | Skip the interactive confirmations. Without this, removal of the binary and data dir each prompt individually with a default of `No`. |
 
 After `--purge`, the next `ai-beacon install` starts from a clean slate.
+
+## Windows consoles and raw escape codes
+
+`ai-beacon session` works in every Windows console: Windows Terminal, the VS Code and JetBrains terminals, and the classic console window (`conhost.exe`). You get the classic window by default on Windows 10, and on Windows 11 whenever the **Default terminal application** setting is **Windows Console Host** (Settings → System → For developers → Terminal).
+
+A classic console window shows terminal colour and cursor codes as raw text, such as `←[H←[1;29r`, unless the program running in it asks the window to interpret them. `ai-beacon session` asks for that while the session runs and puts the window back the way it found it when the session ends. If you still see raw codes like these, you are running an older `ai-beacon`: download the current binary from [Native binaries](#native-binaries), or start the session from Windows Terminal.
+
+Windows Terminal is still recommended, and it is required for [spawning sessions from the dashboard](multi-machine.md#platform-requirements).
 
 ## "Session not appearing" troubleshooting
 

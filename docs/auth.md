@@ -48,6 +48,8 @@ kubectl exec -n ai-beacon deploy/ai-beacon -- cat /data/password # Helm
 
 Sign-in URL `https://your.host/?token=<password>` works for bookmarks / scripts; otherwise use the standard login form.
 
+Sign-in attempts (login form and `?token=` link alike, successful or not) are rate-limited per client IP: 2 per minute, 12 per hour. Behind a reverse proxy, pass `--trusted-proxies <proxy CIDRs>` so the client IP comes from `X-Forwarded-For`; otherwise every user shares the proxy's budget.
+
 ## OIDC (bring your own IdP)
 
 Per-user identity via any OIDC-compliant IdP. Required flags:

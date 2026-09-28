@@ -19,7 +19,6 @@ These apply to the machine running the wrapped coding agent (`ai-beacon session 
 | `AI_BEACON_DEVICE_NAME` | Friendly device name shown on session cards and the device-grouped grid. | hostname |
 | `AI_BEACON_PROJECTS_DIR` | Base directories of your repositories. Enables the dashboard's "spawn new session" flow and worktree workflows. Accepts a single path or a list joined by the OS path separator (`:` on Unix, `;` on Windows) for multiple roots — e.g. `~/work:~/oss`. Disabled when unset. | _(unset)_ |
 | `AI_BEACON_WORKTREE_LOCATION` | Where new worktrees are created relative to the source repo. `sibling` (default) places them next to the repo; `subdirectory` places them inside it. | `sibling` |
-| `AI_BEACON_BAR_COST` | Whether the local terminal status bar shows the session cost. Set to `off`, `0`, or `false` to hide it (context usage is unaffected) — handy when pairing, screen-sharing, or recording. `--hide-cost` overrides this. | show |
 | `AI_BEACON_LOG_FILE` | Override the log file location. Absolute path, or a bare filename rooted under `<data-dir>/logs/`. | _(unset, logs to data dir)_ |
 | `AI_BEACON_DATA_DIR` | Directory for `config.toml`, the auth token, logs, and session data. Used by every `ai-beacon` command. Must be an absolute path. See [Data directory layout](#data-directory-layout). | _(platform config dir)_ |
 | `AI_BEACON_JIRA_URL` | Jira instance base URL (e.g. `https://acme.atlassian.net`, or `https://jira.example.com/jira` for a Data Center install under a subfolder). Enables pasting a Jira ticket into the *Implement Issue* workflow. Disabled when unset. Falls back to a generic `JIRA_URL` if unset — but it is **never** inferred from the ticket URL you paste. | _(unset)_ |
@@ -71,7 +70,6 @@ If the dialog says the agent has no Jira credentials, the agent process is not s
 | `--log-file <path>` | Override `$AI_BEACON_LOG_FILE`. |
 | `--capture-bytes <dir>` | Capture raw byte streams under `<dir>`: `agent-pty.bin` (pre-compositor PTY chunks), `local-stdout.bin` (post-compositor terminal output), `events.jsonl` (timing/resize), and `manifest.json`. Useful when reporting terminal rendering issues (especially Windows ConPTY); share the directory with maintainers so the session can be replayed offline. Each session overwrites `<dir>`, so this flag fits a single targeted capture; for recurring capture use `--capture-bytes-auto-routed`. |
 | `--capture-bytes-auto-routed` | Capture each session into its own subdirectory at `<data-dir>/sessions/agent-session-<id>.capture/`, keeping the 45 most recent runs (older runs are pruned automatically). Use when you want to leave capture on across several sessions (add the flag to your launcher script, reproduce a few sessions, then remove it). Wins over `--capture-bytes` if both are set. |
-| `--hide-cost` | Hide the session cost from the local terminal status bar (context usage is unaffected). Useful when pairing, screen-sharing, or recording. Overrides `$AI_BEACON_BAR_COST`. |
 
 Flags marked `(internal)` in `--help` are populated by the dashboard when it spawns a session and aren't intended for direct invocation.
 
@@ -101,9 +99,9 @@ These apply to the machine running `ai-beacon server` (or the container / pod).
 | `-a, --address <addr>` | Listen address (e.g. `:8080`, `127.0.0.1:9000`). | `:8080` |
 | `--auth <mode>` | `""` (password, default), `none`, `proxy-header`, or `oidc`. | `""` |
 | `--auth-token <token>` | Agent bearer token (overrides `$AI_BEACON_AUTH_TOKEN`). | _(env / generated)_ |
-| `--password-file <path>` | Read the browser password from a file instead of env / data dir. | _(unset)_ |
+| `--password-file <path>` | Read the browser password from the file's first line; wins over `AI_BEACON_AUTH_PASSWORD` and the data-dir password. An empty first line stops the server with an error. | _(unset)_ |
 | `--data-dir <path>` | Override `$AI_BEACON_DATA_DIR`. | _(env / platform config dir)_ |
-| `--trusted-proxies <cidrs>` | CIDRs whose immediate-peer requests are trusted to relay `X-Forwarded-*`. Required by `--auth=proxy-header`. | _(empty, trust none)_ |
+| `--trusted-proxies <cidrs>` | CIDRs whose immediate-peer requests are trusted to relay `X-Forwarded-*`. Required by `--auth=proxy-header`; also makes login rate limiting use the client IP from `X-Forwarded-For`. | _(empty, trust none)_ |
 | `--allowed-users <names>` | Sign-in allowlist (overrides `$AI_BEACON_ALLOWED_USERS`). Required by `--auth=proxy-header` and `--auth=oidc`. | _(env / unset)_ |
 | `--oidc-issuer`, `--oidc-client-id`, `--oidc-client-secret`, `--oidc-client-secret-file`, `--oidc-scopes`, `--oidc-redirect-url`, `--oidc-display-name` | OIDC configuration. Each falls back to the matching `AI_BEACON_OIDC_*` env var. See [Authentication](auth.md). | — |
 | `--log-file <path>` | Override `$AI_BEACON_LOG_FILE`. | _(unset)_ |
