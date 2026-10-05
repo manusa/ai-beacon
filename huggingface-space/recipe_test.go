@@ -120,6 +120,11 @@ func (s *RecipeSuite) TestEntrypointBuildsRedirectURLFromSpaceHost() {
 		"HF Space hostname is injected as SPACE_HOST (no scheme); the recipe must derive the OIDC redirect URL from it — a hard-coded URL would only work for one specific Space")
 }
 
+func (s *RecipeSuite) TestEntrypointAllowsTheSpaceOrigin() {
+	s.Contains(s.entrypoint, `--allowed-origins "https://${SPACE_HOST}"`,
+		"the dashboard WebSockets must accept the Space's own origin even if the HF proxy rewrites Host")
+}
+
 func (s *RecipeSuite) TestSpaceREADMEDeclaresDockerSDK() {
 	frontmatter := extractFrontmatter(s.readme)
 	s.Require().NotEmpty(frontmatter, "HF Space README.md must open with a YAML frontmatter block — without it HF refuses to build the Space")

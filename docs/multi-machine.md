@@ -94,7 +94,7 @@ Everything forwarded is visible to the agent. For Jira, [`jira_token_path`](conf
 
 **macOS: allow Automation.** If your terminal is Ghostty, Terminal, or a JetBrains IDE (whose new sessions open in Terminal), ai-beacon opens new sessions by scripting that app; with Ghostty, each one opens as a window of the instance you already have running. macOS asks for permission the first time. Allow it: both starting sessions and bringing a session's window to the front depend on it. If you denied it, starting a session fails with an error such as `Not authorized to send Apple events to Ghostty. (-1743)`; turn it back on under **System Settings → Privacy & Security → Automation**.
 
-**Windows: install Windows Terminal.** Starting a session opens a new Windows Terminal window, so it works even when the running agent is in a classic console. Bringing an existing session's window to the front is macOS/Linux-only for now.
+**Windows: Windows Terminal recommended.** Starting a session opens a new Windows Terminal window when Windows Terminal is installed, and a classic console window otherwise (Windows 10 and older Windows Server releases do not ship Windows Terminal). This holds wherever the running agent is: a classic console, Windows Terminal, or a JetBrains or Alacritty terminal. If the new window cannot open the session's folder, starting the session fails with an error such as `the new terminal could not enter C:\work\repo`. If your Windows user folder name contains `&`, `(`, `)`, `^` or `%`, starting a session fails with `set TMP and TEMP to a folder without …`; point the agent's `TMP` and `TEMP` at a plain folder such as `C:\Temp\ai-beacon`. Bringing an existing session's window to the front is macOS/Linux-only for now.
 
 ## Worktrees
 
@@ -143,4 +143,4 @@ PR state is re-fetched at exit, so a PR merged moments before the session ends s
 
 - Same token, same `AI_BEACON_URL` on each. The binaries are per-platform — see the download step in the in-app setup guide on the dashboard.
 - Windows paths in `AI_BEACON_PROJECTS_DIR` work too (`C:\Users\you\projects`); set via PowerShell `$env:AI_BEACON_PROJECTS_DIR`. Use `;` as the separator for multiple roots on Windows: `C:\work;C:\oss`.
-- Spawning from the dashboard on Windows needs Windows Terminal; see [Platform requirements](#platform-requirements).
+- Spawning from the dashboard on Windows opens Windows Terminal when it is installed, else a classic console window; see [Platform requirements](#platform-requirements).

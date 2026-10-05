@@ -14,6 +14,7 @@ This page picks up after that. It documents the download URLs for the six native
 - [Running the wrapper without `install`](#running-the-wrapper-without-install)
 - [Uninstalling](#uninstalling)
 - [Windows consoles and raw escape codes](#windows-consoles-and-raw-escape-codes)
+- [A smaller browser is watching](#a-smaller-browser-is-watching)
 - ["Session not appearing" troubleshooting](#session-not-appearing-troubleshooting)
 - [Logs](#logs)
 
@@ -119,7 +120,28 @@ After `--purge`, the next `ai-beacon install` starts from a clean slate.
 
 A classic console window shows terminal colour and cursor codes as raw text, such as `←[H←[1;29r`, unless the program running in it asks the window to interpret them. `ai-beacon session` asks for that while the session runs and puts the window back the way it found it when the session ends. If you still see raw codes like these, you are running an older `ai-beacon`: download the current binary from [Native binaries](#native-binaries), or start the session from Windows Terminal.
 
-Windows Terminal is still recommended, and it is required for [spawning sessions from the dashboard](multi-machine.md#platform-requirements).
+Windows Terminal is still recommended. [Sessions spawned from the dashboard](multi-machine.md#platform-requirements) open in a new Windows Terminal window when it is installed, and in a classic console window otherwise.
+
+## A smaller browser is watching
+
+A session is drawn at the size of its smallest viewer. When you open it in a browser window smaller than your terminal, the agent shrinks to the browser's size, and your terminal keeps leftover space on the right, at the bottom, or both:
+
+Anything to the right of where the status bar ends, or below the status bar, is outside the session. Dim lines mark that edge:
+
+- **Browser narrower than your terminal:** a short vertical line closes the status bar on the right.
+  - On Windows with right margins on (see below), the vertical line runs down the whole right edge of the session.
+  - On other systems it stays on the status bar row: a full-height line would scroll into your terminal's scrollback.
+- **Browser shorter than your terminal:** a horizontal line sits below the status bar. It is as wide as the session, or as wide as your terminal when the full vertical line is drawn.
+- The lines go away once the browser closes or grows to your terminal's size.
+
+**On Windows, `ai-beacon` sets your terminal's right margin to the session's width**, so the agent's long lines wrap where the agent expects. Without it, lines wrap at your terminal's full width, and the screen fills with garbled rows until the browser closes. Windows Terminal and recent Windows 11 consoles support right margins.
+
+- **Scrollback:** while the margin is set, lines that scroll off the top of the session do not reach your terminal's scrollback, and they are lost from it for good. With Claude Code's default inline mode, that is the conversation transcript. The browser still shows the session.
+- **Rows still garble:** your terminal ignores right margins. Use Windows Terminal, or make the browser window at least as large as your terminal.
+- **VS Code and JetBrains terminals:** these may ignore right margins too, and may lose the cursor position they saved. Turn margins off there if you see either.
+- **Turning margins off:** do this if they cause glitches, for example the cursor jumping when a browser connects. With margins off, the garbled rows come back while a smaller browser is attached (see [Configuration](configuration.md#agent-client-configuration)).
+  - For the current PowerShell window, run `$env:AI_BEACON_LOCAL_MARGINS = "0"` before `ai-beacon session`.
+  - To make it permanent, run `setx AI_BEACON_LOCAL_MARGINS 0`; it applies to terminals opened afterwards.
 
 ## "Session not appearing" troubleshooting
 

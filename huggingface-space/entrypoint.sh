@@ -25,4 +25,5 @@ exec /app/ai-beacon server \
   --oidc-client-id "${OAUTH_CLIENT_ID}" \
   --oidc-scopes "${OAUTH_SCOPES}" \
   --oidc-redirect-url "https://${SPACE_HOST}/login/oidc/callback" \
+  --allowed-origins "https://${SPACE_HOST}" \
   "$@"

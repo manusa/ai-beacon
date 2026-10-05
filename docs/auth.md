@@ -83,7 +83,7 @@ Hugging Face Spaces is a first-class consumer of this generic OIDC flow. Setting
 | `OAUTH_CLIENT_SECRET` | `--oidc-client-secret` | env-var fallback only — the recipe deliberately does **not** put the secret on argv so it stays out of `/proc/<pid>/cmdline` |
 | `OAUTH_SCOPES` | `--oidc-scopes` | argv (`entrypoint.sh`) |
 
-The redirect URL is **not** an HF-injected var. HF instead injects `SPACE_HOST` (the public hostname, no scheme) and accepts any callback URL targeting the Space — so the recipe builds `--oidc-redirect-url https://${SPACE_HOST}/login/oidc/callback` at boot.
+The redirect URL is **not** an HF-injected var. HF instead injects `SPACE_HOST` (the public hostname, no scheme) and accepts any callback URL targeting the Space — so the recipe builds `--oidc-redirect-url https://${SPACE_HOST}/login/oidc/callback` at boot. It also passes `--allowed-origins https://${SPACE_HOST}`, so the dashboard's live connections accept the Space's own URL even if HF's proxy rewrites `Host` (see [Behind a reverse proxy](configuration.md#behind-a-reverse-proxy)).
 
 The Space's `README.md` frontmatter sets `hf_oauth_scopes: [email]` — **not** the full `openid, profile, email` list. HF auto-includes `openid` and `profile` whenever `hf_oauth: true` is set; the `hf_oauth_scopes` YAML key is a strict allowlist of *extra* permission scopes (email, repo scopes, billing, …) and HF's API rejects the git push with `must be one of [email, read-repos, …]` if `openid` or `profile` appear there. At runtime the injected `OAUTH_SCOPES` env var still resolves to `openid profile email`.
 
@@ -106,6 +106,8 @@ ai-beacon server \
 
 Both `--trusted-proxies` and `--allowed-users` are **required** in this mode — without trusted-proxies any client could spoof `X-Forwarded-User`, and without an allowlist any identity the proxy verified would pass.
 
+The dashboard's API and live connections also answer only to an IP address, `localhost`, or a name listed in `--allowed-origins`, so add the public URL your proxy serves (for example `--allowed-origins https://ai-beacon.example.com`). Otherwise a DNS-rebinding page opened in a browser on a trusted-proxy address could send its own `X-Forwarded-User`. Pass `--host-check=false` only when the proxy is the only thing that can reach ai-beacon, as in the [OpenShift OAuth Proxy](#openshift-oauth-proxy) chart setup.
+
 Typical fronting proxies:
 
 - OpenShift OAuth Proxy (see [§ OpenShift OAuth Proxy](#openshift-oauth-proxy) for chart support).
@@ -119,7 +121,7 @@ Typical fronting proxies:
 ai-beacon server --auth=none
 ```
 
-The dashboard is accessible to anyone who can reach the port. Use only when there is a separate access boundary you trust completely — a single-user laptop, a private Tailscale-only mesh, an SSH-tunneled port. **Do not pair `--auth=none` with a public ingress.**
+The dashboard is accessible to anyone who can reach the port. Pages on other websites cannot use it through your browser: its live connections refuse other sites, and in this mode its API and live connections also answer only to an IP address, `localhost`, or a name listed in `--allowed-origins`, which stops DNS-rebinding pages. To open it by a machine or VPN name, list that origin (otherwise the page loads but shows no sessions, and the server logs the refused name), for example `--allowed-origins http://mybox:8080`. Use only when there is a separate access boundary you trust completely — a single-user laptop, a private Tailscale-only mesh, an SSH-tunneled port. **Do not pair `--auth=none` with a public ingress.**
 
 Agent auth still applies in this mode (PSK token required).
 

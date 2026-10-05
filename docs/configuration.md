@@ -20,6 +20,7 @@ These apply to the machine running the wrapped coding agent (`ai-beacon session 
 | `AI_BEACON_PROJECTS_DIR` | Base directories of your repositories. Enables the dashboard's "spawn new session" flow and worktree workflows. Accepts a single path or a list joined by the OS path separator (`:` on Unix, `;` on Windows) for multiple roots — e.g. `~/work:~/oss`. Disabled when unset. | _(unset)_ |
 | `AI_BEACON_WORKTREE_LOCATION` | Where new worktrees are created relative to the source repo. `sibling` (default) places them next to the repo; `subdirectory` places them inside it. | `sibling` |
 | `AI_BEACON_LOG_FILE` | Override the log file location. Absolute path, or a bare filename rooted under `<data-dir>/logs/`. | _(unset, logs to data dir)_ |
+| `AI_BEACON_LOCAL_MARGINS` | Windows only. Right margins that keep the agent's lines wrapping correctly while a smaller browser watches; `0`, `false`, `off` or `no` turns them off. See [A smaller browser is watching](connect-agent.md#a-smaller-browser-is-watching). | `on` |
 | `AI_BEACON_DATA_DIR` | Directory for `config.toml`, the auth token, logs, and session data. Used by every `ai-beacon` command. Must be an absolute path. See [Data directory layout](#data-directory-layout). | _(platform config dir)_ |
 | `AI_BEACON_JIRA_URL` | Jira instance base URL (e.g. `https://acme.atlassian.net`, or `https://jira.example.com/jira` for a Data Center install under a subfolder). Enables pasting a Jira ticket into the *Implement Issue* workflow. Disabled when unset. Falls back to a generic `JIRA_URL` if unset — but it is **never** inferred from the ticket URL you paste. | _(unset)_ |
 | `AI_BEACON_JIRA_EMAIL` | Your Atlassian account email. Set it for **Atlassian Cloud** (the API token is used as a Basic-auth password); leave it unset for **Data Center**, where the token is sent as a Bearer PAT. Falls back to a generic `JIRA_USER` if unset. | _(unset)_ |
@@ -83,6 +84,7 @@ These apply to the machine running `ai-beacon server` (or the container / pod).
 | `AI_BEACON_AUTH_PASSWORD` | Browser login password (default auth mode). When unset, generated and written to `<data-dir>/password`. | _(auto-generated)_ |
 | `AI_BEACON_DATA_DIR` | Directory for `config.toml`, the auth token, password, logs, and session data. Must be an absolute path. See [Data directory layout](#data-directory-layout). | _(platform config dir)_ |
 | `AI_BEACON_ALLOWED_USERS` | Comma-separated allowlist of usernames permitted to sign in. Required by OIDC and proxy-header modes. | _(unset)_ |
+| `AI_BEACON_ALLOWED_ORIGINS` | Comma-separated extra browser origins allowed to open the dashboard's live connections. See [Behind a reverse proxy](#behind-a-reverse-proxy). | _(unset, same-origin only)_ |
 | `AI_BEACON_OIDC_ISSUER` | OIDC issuer URL (e.g. `https://accounts.google.com`). | _(unset)_ |
 | `AI_BEACON_OIDC_CLIENT_ID` | OIDC client ID. | _(unset)_ |
 | `AI_BEACON_OIDC_CLIENT_SECRET` | OIDC client secret. Use `--oidc-client-secret-file` instead when running on shared hosts to keep the secret out of `argv`. | _(unset)_ |
@@ -103,8 +105,29 @@ These apply to the machine running `ai-beacon server` (or the container / pod).
 | `--data-dir <path>` | Override `$AI_BEACON_DATA_DIR`. | _(env / platform config dir)_ |
 | `--trusted-proxies <cidrs>` | CIDRs whose immediate-peer requests are trusted to relay `X-Forwarded-*`. Required by `--auth=proxy-header`; also makes login rate limiting use the client IP from `X-Forwarded-For`. | _(empty, trust none)_ |
 | `--allowed-users <names>` | Sign-in allowlist (overrides `$AI_BEACON_ALLOWED_USERS`). Required by `--auth=proxy-header` and `--auth=oidc`. | _(env / unset)_ |
+| `--allowed-origins <urls>` | Extra browser origins (`scheme://host[:port]`, comma-separated or repeated) allowed to open the dashboard's live connections (overrides `$AI_BEACON_ALLOWED_ORIGINS`). With `--auth=none` or `--auth=proxy-header`, also the names (besides IP addresses and `localhost`) the dashboard answers to; see [None](auth.md#none-no-browser-auth) and [Proxy-header](auth.md#proxy-header-identity-aware-reverse-proxy). An invalid entry stops the server with an error. See [Behind a reverse proxy](#behind-a-reverse-proxy). | _(env / unset)_ |
+| `--host-check` | With `--auth=none` or `--auth=proxy-header`, answer only to an IP address, `localhost` or an `--allowed-origins` name (stops DNS-rebinding pages). Set `--host-check=false` only when an authenticating proxy is the only thing that can reach the server, as in the Helm chart. | `true` |
 | `--oidc-issuer`, `--oidc-client-id`, `--oidc-client-secret`, `--oidc-client-secret-file`, `--oidc-scopes`, `--oidc-redirect-url`, `--oidc-display-name` | OIDC configuration. Each falls back to the matching `AI_BEACON_OIDC_*` env var. See [Authentication](auth.md). | — |
 | `--log-file <path>` | Override `$AI_BEACON_LOG_FILE`. | _(unset)_ |
+
+### Behind a reverse proxy
+
+The dashboard's live connections (the session list, notifications and terminals are WebSockets) only accept a browser page served from the dashboard's own address: the page's origin must match the `Host` the server receives. This stops a page on another site from opening your terminals through your browser.
+
+Most proxies forward `Host` unchanged and need nothing more. The Helm chart's Ingress, Route and OpenShift OAuth Proxy keep it, and the [Hugging Face Space](auth.md#hugging-face-spaces) recipe sets `--allowed-origins` to the Space URL. With `--auth=proxy-header` the dashboard also answers only to the names in `--allowed-origins` (besides IP addresses and `localhost`), so list your public URL there; the Helm chart instead passes `--host-check=false`, because only its OAuth Proxy sidecar can reach ai-beacon.
+
+If your proxy rewrites `Host` (for example to an internal service name), the dashboard loads but its live connections are refused with `403`. Allow the public URL the browser uses:
+
+```bash
+ai-beacon server --allowed-origins https://ai-beacon.example.com
+```
+
+With `--auth=none` or `--auth=proxy-header` the dashboard also checks the `Host` it receives, so list the internal name the proxy rewrites to as well (the server log names any refused one), or pass `--host-check=false` when the proxy is the only thing that can reach ai-beacon:
+
+```bash
+ai-beacon server --auth=proxy-header ... \
+  --allowed-origins https://ai-beacon.example.com,http://ai-beacon.internal:8080
+```
 
 ## Helm values
 
