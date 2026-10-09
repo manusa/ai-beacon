@@ -16,6 +16,7 @@ This page picks up after that. It documents the download URLs for the six native
 - [Windows consoles and raw escape codes](#windows-consoles-and-raw-escape-codes)
 - [A smaller browser is watching](#a-smaller-browser-is-watching)
 - ["Session not appearing" troubleshooting](#session-not-appearing-troubleshooting)
+- [The terminal keeps disconnecting](#the-terminal-keeps-disconnecting)
 - [Logs](#logs)
 
 ## Native binaries
@@ -175,6 +176,10 @@ Walk these in order — they cover ~90% of cases.
    ```
 
    If this works but hook-launched sessions don't, the hook isn't picking up `config.toml` — usually a stale binary path. Re-run `ai-beacon install` so `binary_path` updates.
+
+## The terminal keeps disconnecting
+
+If a session's terminal disconnects every time you open it in the browser and reconnects a moment later, the wrapper is probably older than the dashboard. The dashboard refuses any single terminal message over 1 MiB, and older wrappers send a session's whole screen and scrollback as one message. The wrapper log (see [Logs](#logs)) shows `the dashboard closed the connection: a frame was over its read limit`. Download the current binary (see [Native binaries](#native-binaries)) and restart the session.
 
 ## Logs
 
