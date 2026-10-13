@@ -181,6 +181,8 @@ Walk these in order — they cover ~90% of cases.
 
 If a session's terminal disconnects every time you open it in the browser and reconnects a moment later, the wrapper is probably older than the dashboard. The dashboard refuses any single terminal message over 1 MiB, and older wrappers send a session's whole screen and scrollback as one message. The wrapper log (see [Logs](#logs)) shows `the dashboard closed the connection: a frame was over its read limit`. Download the current binary (see [Native binaries](#native-binaries)) and restart the session.
 
+Behind IIS Application Request Routing, a session whose connection drops a few seconds after every connect, with reconnects failing with HTTP 502, is ARR failing on compressed WebSocket messages. The wrapper log shows `connection closed before it was stable` or `HTTP 502`. See [IIS Application Request Routing (ARR)](configuration.md#iis-application-request-routing-arr) for the fix. Older wrappers could stop reconnecting altogether after such an outage, leaving the session disconnected until restarted; download the current binary and restart those sessions.
+
 ## Logs
 
 Logs are written to `<data-dir>/logs/` by default. The session command suppresses log output to stderr (it would garble the wrapped agent's TUI), so the log file is the only place errors land.

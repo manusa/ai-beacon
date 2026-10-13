@@ -104,9 +104,9 @@ These apply to the machine running `ai-beacon server` (or the container / pod).
 | `--auth-token <token>` | Agent bearer token (overrides `$AI_BEACON_AUTH_TOKEN`). | _(env / generated)_ |
 | `--password-file <path>` | Read the browser password from the file's first line; wins over `AI_BEACON_AUTH_PASSWORD` and the data-dir password. An empty first line stops the server with an error. | _(unset)_ |
 | `--data-dir <path>` | Override `$AI_BEACON_DATA_DIR`. | _(env / platform config dir)_ |
-| `--trusted-proxies <cidrs>` | CIDRs whose immediate-peer requests are trusted to relay `X-Forwarded-*`. Required by `--auth=proxy-header`; also makes login rate limiting use the client IP from `X-Forwarded-For`. | _(empty, trust none)_ |
+| `--trusted-proxies <cidrs>` | CIDRs whose immediate-peer requests are trusted to relay `X-Forwarded-*`. Required by `--auth=proxy-header`; also makes login rate limiting and the request log use the client IP from `X-Forwarded-For`. List only the proxies' own addresses; see [Client IP behind a proxy](#client-ip-behind-a-proxy). | _(empty, trust none)_ |
 | `--allowed-users <names>` | Sign-in allowlist (overrides `$AI_BEACON_ALLOWED_USERS`). Required by `--auth=proxy-header` and `--auth=oidc`. | _(env / unset)_ |
-| `--allowed-origins <urls>` | Extra browser origins (`scheme://host[:port]`, comma-separated or repeated) allowed to open the dashboard's live connections (overrides `$AI_BEACON_ALLOWED_ORIGINS`). With `--auth=none` or `--auth=proxy-header`, also the names (besides IP addresses and `localhost`) the dashboard answers to; see [None](auth.md#none-no-browser-auth) and [Proxy-header](auth.md#proxy-header-identity-aware-reverse-proxy). An invalid entry stops the server with an error. See [Behind a reverse proxy](#behind-a-reverse-proxy). | _(env / unset)_ |
+| `--allowed-origins <urls>` | Extra browser origins (`scheme://host[:port]`, comma-separated or repeated) allowed to open the dashboard's live connections and, from browsers that send no fetch metadata, to sign in and out (overrides `$AI_BEACON_ALLOWED_ORIGINS`). With `--auth=none` or `--auth=proxy-header`, also the names (besides IP addresses and `localhost`) the dashboard answers to; see [None](auth.md#none-no-browser-auth) and [Proxy-header](auth.md#proxy-header-identity-aware-reverse-proxy). An invalid entry stops the server with an error. See [Behind a reverse proxy](#behind-a-reverse-proxy). | _(env / unset)_ |
 | `--host-check` | With `--auth=none` or `--auth=proxy-header`, answer only to an IP address, `localhost` or an `--allowed-origins` name (stops DNS-rebinding pages). Set `--host-check=false` only when an authenticating proxy is the only thing that can reach the server, as in the Helm chart. | `true` |
 | `--oidc-issuer`, `--oidc-client-id`, `--oidc-client-secret`, `--oidc-client-secret-file`, `--oidc-scopes`, `--oidc-redirect-url`, `--oidc-display-name` | OIDC configuration. Each falls back to the matching `AI_BEACON_OIDC_*` env var. See [Authentication](auth.md). | — |
 | `--log-file <path>` | Override `$AI_BEACON_LOG_FILE`. | _(unset)_ |
@@ -117,7 +117,7 @@ The dashboard's live connections (the session list, notifications and terminals 
 
 Most proxies forward `Host` unchanged and need nothing more. The Helm chart's Ingress, Route and OpenShift OAuth Proxy keep it, and the [Hugging Face Space](auth.md#hugging-face-spaces) recipe sets `--allowed-origins` to the Space URL. With `--auth=proxy-header` the dashboard also answers only to the names in `--allowed-origins` (besides IP addresses and `localhost`), so list your public URL there; the Helm chart instead passes `--host-check=false`, because only its OAuth Proxy sidecar can reach ai-beacon.
 
-If your proxy rewrites `Host` (for example to an internal service name), the dashboard loads but its live connections are refused with `403`. Allow the public URL the browser uses:
+If your proxy rewrites `Host` (for example to an internal service name), the dashboard loads but its live connections are refused with `403`. So are password sign-in and sign-out from a browser that sends no fetch metadata, which is every browser on a plain-HTTP address other than `localhost`: the login page or the account menu says the server refused the request, and the server log names the refused origin. Allow the public URL the browser uses:
 
 ```bash
 ai-beacon server --allowed-origins https://ai-beacon.example.com
@@ -129,6 +129,39 @@ With `--auth=none` or `--auth=proxy-header` the dashboard also checks the `Host`
 ai-beacon server --auth=proxy-header ... \
   --allowed-origins https://ai-beacon.example.com,http://ai-beacon.internal:8080
 ```
+
+#### Client IP behind a proxy
+
+Sign-in attempts are rate-limited per client IP, and the server's request log shows that same IP. Behind a proxy, every request comes from the proxy, so pass `--trusted-proxies` with the proxy's own addresses to make ai-beacon read the client IP from `X-Forwarded-For`:
+
+```bash
+ai-beacon server --trusted-proxies 192.168.1.4/32
+```
+
+List only the proxies, not the network your users are on. ai-beacon reads `X-Forwarded-For` from right to left and skips every address inside the trusted ranges, so a range such as `192.168.1.0/24` that also covers your users makes their addresses look like proxies too: every sign-in is then counted against the proxy's address and all users share one budget. Entries with a port (`203.0.113.7:51234`) are accepted.
+
+#### IIS Application Request Routing (ARR)
+
+ARR passes the WebSocket compression offer (`Sec-WebSocket-Extensions: permessage-deflate`) that browsers and agents send on to ai-beacon, which accepts it, but ARR then fails to relay the compressed messages. Terminals connect and drop within seconds, reconnecting fails with HTTP 502, and agents show as disconnected even though connecting straight to the ai-beacon port works. Clear that header on the way in, so ai-beacon never compresses:
+
+1. In IIS Manager, open **URL Rewrite** for the site, choose **View Server Variables** and add `HTTP_SEC_WEBSOCKET_EXTENSIONS`.
+2. In the reverse-proxy rule that forwards to ai-beacon, set that server variable to `;` (ai-beacon reads it as no extensions offered):
+
+   ```xml
+   <rule name="ai-beacon reverse proxy" stopProcessing="true">
+     <match url="(.*)" />
+     <serverVariables>
+       <set name="HTTP_SEC_WEBSOCKET_EXTENSIONS" value=";" />
+     </serverVariables>
+     <action type="Rewrite" url="http://ai-beacon-host:8080/{R:1}" />
+   </rule>
+   ```
+
+Setting it on the rule every request goes through covers every WebSocket, browser and agent alike; plain HTTP requests are unaffected. To check, send a WebSocket handshake through IIS with `Sec-WebSocket-Extensions: permessage-deflate`: the `101 Switching Protocols` reply should carry no `Sec-WebSocket-Extensions` header.
+
+For the client IP, keep **Preserve client IP in the following header: X-Forwarded-For** enabled under **Application Request Routing Cache → Server Proxy Settings** (the default) and pass `--trusted-proxies <IIS address>/32` (see [Client IP behind a proxy](#client-ip-behind-a-proxy)).
+
+IIS logs each request's query string by default, so sign in with the login form rather than the `?token=` link, which would write the password into the IIS logs.
 
 ## Helm values
 

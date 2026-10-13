@@ -46,9 +46,9 @@ cat ~/Library/Application\ Support/ai-beacon/password            # local, macOS
 kubectl exec -n ai-beacon deploy/ai-beacon -- cat /data/password # Helm
 ```
 
-Sign-in URL `https://your.host/?token=<password>` works for bookmarks / scripts; otherwise use the standard login form.
+Sign-in URL `https://your.host/?token=<password>` works for bookmarks / scripts; otherwise use the standard login form. Open it as a page (clicked, typed, or opened from a terminal or QR code): loaded inside a frame or as an image, or navigated by a script on another site, it is refused with `403`. Behind a reverse proxy that logs query strings (IIS does by default), prefer the login form: the link would put the password in the proxy's access log.
 
-Sign-in attempts (login form and `?token=` link alike, successful or not) are rate-limited per client IP: 2 per minute, 12 per hour. Behind a reverse proxy, pass `--trusted-proxies <proxy CIDRs>` so the client IP comes from `X-Forwarded-For`; otherwise every user shares the proxy's budget.
+Sign-in attempts (login form and `?token=` link alike, successful or not) are rate-limited per client IP: 2 per minute, 12 per hour. Sign-in and sign-out requests another site makes through your browser are refused with `403`, and refused sign-ins do not count toward the limit. A `?token=` link another site opens is refused unless you click through to it, so each click on a hostile page can still spend one attempt. Over plain HTTP to an address other than `localhost` browsers do not label these requests: cross-site sign-in and sign-out are still refused by their `Origin`, but a `?token=` URL loaded as an image there still counts, so serve the dashboard over HTTPS. Behind a reverse proxy, pass `--trusted-proxies` with the proxy's own addresses (not your users' network) so the client IP comes from `X-Forwarded-For`; otherwise every user shares the proxy's budget. See [Client IP behind a proxy](configuration.md#client-ip-behind-a-proxy).
 
 ## OIDC (bring your own IdP)
 
