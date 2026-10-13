@@ -52,6 +52,8 @@ Invoke-WebRequest `
 
 `snapshot` is the rolling pre-release alias that always points at the latest build. A stable release tag will replace it once published.
 
+Snapshot builds report `0.0.0-snapshot.<YYYYMMDDHHMMSS>`, the UTC time of the commit they were built from, and the container image built from the same commit reports the same version. Keep your wrappers on the dashboard's build by updating both together, and compare `ai-beacon version` with the dashboard's: `docker exec <container> /app/ai-beacon version`, or `kubectl exec -n ai-beacon deploy/ai-beacon -- /app/ai-beacon version` for the Helm chart.
+
 ## What `ai-beacon install` does
 
 `install` is idempotent — it can be re-run any time. It performs three steps:
