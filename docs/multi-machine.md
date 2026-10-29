@@ -74,7 +74,7 @@ export AI_BEACON_PROJECTS_DIR=~/projects
 export AI_BEACON_PROJECTS_DIR=~/work:~/oss:~/experiments
 ```
 
-With that set, the host periodically reports its discovered repositories. The dashboard shows them under that device's "Spawn new session" picker; selecting one launches `ai-beacon session -- claude` (or your configured agent) inside the repo. The spawn request goes through the existing agent → server WebSocket — no new ports to open, no SSH involved.
+With that set, the host periodically reports its discovered repositories. The dashboard lists them in that device's **New session** dialog (the **+** button in the device's header, *Start session on {device}*); starting a session in one launches `ai-beacon session -- claude` (or your configured agent) inside the repo. The spawn request goes through the existing agent → server WebSocket — no new ports to open, no SSH involved.
 
 With multiple roots configured, the picker groups projects per root so the device's `~/work` and `~/oss` trees don't collide. The picker's filter field matches both project names and the root's path — typing `oss` scopes the list to projects under `~/oss` without needing to know any project name.
 

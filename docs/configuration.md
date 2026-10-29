@@ -17,13 +17,13 @@ These apply to the machine running the wrapped coding agent (`ai-beacon session 
 | `AI_BEACON_URL` | Dashboard server URL. | `http://localhost:8080` |
 | `AI_BEACON_AUTH_TOKEN` | Bearer token for agent → dashboard heartbeats. The dashboard generates this on first boot; copy it from the setup guide. | _(required)_ |
 | `AI_BEACON_DEVICE_NAME` | Friendly device name shown on session cards and the device-grouped grid. | hostname |
-| `AI_BEACON_PROJECTS_DIR` | Base directories of your repositories. Enables the dashboard's "spawn new session" flow and worktree workflows. Accepts a single path or a list joined by the OS path separator (`:` on Unix, `;` on Windows) for multiple roots — e.g. `~/work:~/oss`. Disabled when unset. | _(unset)_ |
+| `AI_BEACON_PROJECTS_DIR` | Base directories of your repositories. Enables the dashboard's **New session** dialog and its worktree workflows. Accepts a single path or a list joined by the OS path separator (`:` on Unix, `;` on Windows) for multiple roots — e.g. `~/work:~/oss`. Disabled when unset. | _(unset)_ |
 | `AI_BEACON_WORKTREE_LOCATION` | Where new worktrees are created relative to the source repo. `sibling` (default) places them next to the repo; `subdirectory` places them inside it. | `sibling` |
 | `AI_BEACON_LOG_FILE` | Override the log file location. Absolute path, or a bare filename rooted under `<data-dir>/logs/`. | _(unset, logs to data dir)_ |
 | `AI_BEACON_LOCAL_MARGINS` | Windows only. Right margins that keep the agent's lines wrapping correctly while a smaller browser watches; `0`, `false`, `off` or `no` turns them off. See [A smaller browser is watching](connect-agent.md#a-smaller-browser-is-watching). | `on` |
 | `AI_BEACON_REPLAY_LOG` | Turns off the session output log a wrapper can keep for browser replays: any value other than `1`, `true`, `on` or `yes` turns it off. The standalone wrapper keeps no log yet, so it has no effect there. | _(unset)_ |
 | `AI_BEACON_DATA_DIR` | Directory for `config.toml`, the auth token, logs, and session data. Used by every `ai-beacon` command. Must be an absolute path. See [Data directory layout](#data-directory-layout). | _(platform config dir)_ |
-| `AI_BEACON_JIRA_URL` | Jira instance base URL (e.g. `https://acme.atlassian.net`, or `https://jira.example.com/jira` for a Data Center install under a subfolder). Enables pasting a Jira ticket into the *Implement Issue* workflow. Disabled when unset. Falls back to a generic `JIRA_URL` if unset — but it is **never** inferred from the ticket URL you paste. | _(unset)_ |
+| `AI_BEACON_JIRA_URL` | Jira instance base URL (e.g. `https://acme.atlassian.net`, or `https://jira.example.com/jira` for a Data Center install under a subfolder). Enables pasting a Jira ticket into the *Implement issue* mode. Disabled when unset. Falls back to a generic `JIRA_URL` if unset — but it is **never** inferred from the ticket URL you paste. | _(unset)_ |
 | `AI_BEACON_JIRA_EMAIL` | Your Atlassian account email. Set it for **Atlassian Cloud** (the API token is used as a Basic-auth password); leave it unset for **Data Center**, where the token is sent as a Bearer PAT. Falls back to a generic `JIRA_USER` if unset. | _(unset)_ |
 | `AI_BEACON_JIRA_TOKEN` | Jira API token. Prefer `jira_token_path` in the config file so the secret stays in a file rather than your shell environment. Falls back to a generic `JIRA_TOKEN` if unset. | _(unset)_ |
 
@@ -44,7 +44,7 @@ Sessions you start from the dashboard inherit the environment of the ai-beacon s
 
 ### Jira tickets
 
-With `AI_BEACON_JIRA_URL` and `AI_BEACON_JIRA_TOKEN` set (plus `AI_BEACON_JIRA_EMAIL` on Atlassian Cloud — leave it unset on Data Center), pasting a ticket URL (`https://acme.atlassian.net/browse/ABC-123`) into the *Implement Issue* workflow starts a session seeded with the whole ticket: description, comments, links, subtasks and metadata. Jira is an issue **tracker**, not a git host — the branch and the pull/merge request still go to the project's own GitHub or GitLab remote, so the project needs an authenticated `gh` or `glab` just as it does for a GitHub/GitLab issue.
+With `AI_BEACON_JIRA_URL` and `AI_BEACON_JIRA_TOKEN` set (plus `AI_BEACON_JIRA_EMAIL` on Atlassian Cloud — leave it unset on Data Center), pasting a ticket URL (`https://acme.atlassian.net/browse/ABC-123`) into the *Implement issue* mode starts a session seeded with the whole ticket: description, comments, links, subtasks and metadata. Jira is an issue **tracker**, not a git host — the branch and the pull/merge request still go to the project's own GitHub or GitLab remote, so the project needs an authenticated `gh` or `glab` just as it does for a GitHub/GitLab issue.
 
 A few things worth knowing:
 
@@ -187,7 +187,7 @@ binary_path = "/Users/you/.local/bin/ai-beacon"
 # Multiple base directories (path-list semantics, but as a TOML array):
 projects_dirs = ["/Users/you/work", "/Users/you/oss"]
 
-# Jira as an issue source for the Implement Issue workflow. The token is a
+# Jira as an issue source for the Implement issue mode. The token is a
 # *path*, never the value: it is read at spawn time and never handed to the
 # agent process. Omit jira_email on a Data Center instance (Bearer PAT).
 # jira_url        = "https://acme.atlassian.net"

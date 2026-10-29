@@ -14,9 +14,12 @@ This page picks up after that. It documents the download URLs for the six native
 - [Running the wrapper without `install`](#running-the-wrapper-without-install)
 - [Uninstalling](#uninstalling)
 - [Windows consoles and raw escape codes](#windows-consoles-and-raw-escape-codes)
+- [The terminal title shows the agent's state](#the-terminal-title-shows-the-agents-state)
 - [A smaller browser is watching](#a-smaller-browser-is-watching)
 - ["Session not appearing" troubleshooting](#session-not-appearing-troubleshooting)
 - [The terminal keeps disconnecting](#the-terminal-keeps-disconnecting)
+- [The status bar says "update required"](#the-status-bar-says-update-required)
+- [The status bar says "rate limited" or "sign-in failing"](#the-status-bar-says-rate-limited-or-sign-in-failing)
 - [Logs](#logs)
 
 ## Native binaries
@@ -125,6 +128,18 @@ A classic console window shows terminal colour and cursor codes as raw text, suc
 
 Windows Terminal is still recommended. [Sessions spawned from the dashboard](multi-machine.md#platform-requirements) open in a new Windows Terminal window when it is installed, and in a classic console window otherwise.
 
+## The terminal title shows the agent's state
+
+When the agent reports its own state, `ai-beacon session` puts a mark in front of your terminal's window title:
+
+- `◐` while the agent works;
+- `✋` while it waits for you, at a permission prompt or a question;
+- `✳` when it is idle.
+
+The mark goes away when the agent stops reporting, as Claude Code does on `/exit`.
+
+The dashboard shows the same state. Claude Code 2.1.295 and later report it on macOS and Linux. On Windows, with `CLAUDE_CODE_DISABLE_TERMINAL_TITLE` set, or with agents that don't report their state, the title keeps the agent's own text and the dashboard state comes from the agent's hooks. While the dashboard can't be reached, the title reads `⚠ ai-beacon offline` instead.
+
 ## A smaller browser is watching
 
 A session is drawn at the size of its smallest viewer. When you open it in a browser window smaller than your terminal, the agent shrinks to the browser's size, and your terminal keeps leftover space on the right, at the bottom, or both:
@@ -184,6 +199,24 @@ Walk these in order — they cover ~90% of cases.
 If a session's terminal disconnects every time you open it in the browser and reconnects a moment later, the wrapper is probably older than the dashboard. The dashboard refuses any single terminal message over 1 MiB, and older wrappers send a session's whole screen and scrollback as one message. The wrapper log (see [Logs](#logs)) shows `the dashboard closed the connection: a frame was over its read limit`. Download the current binary (see [Native binaries](#native-binaries)) and restart the session.
 
 Behind IIS Application Request Routing, a session whose connection drops a few seconds after every connect, with reconnects failing with HTTP 502, is ARR failing on compressed WebSocket messages. The wrapper log shows `connection closed before it was stable` or `HTTP 502`. See [IIS Application Request Routing (ARR)](configuration.md#iis-application-request-routing-arr) for the fix. Older wrappers could stop reconnecting altogether after such an outage, leaving the session disconnected until restarted; download the current binary and restart those sessions.
+
+## The status bar says "update required"
+
+A yellow ` ⚠ update required: update ai-beacon, then restart this session ` row (shortened to ` ⚠ update ai-beacon, then restart ` in a narrow terminal), with `⚠` added to the terminal title, means the dashboard was upgraded and no longer accepts this version of ai-beacon. Every session on the machine still running that version shows it, including one started after the dashboard upgrade from a binary that was not updated. The agent keeps working locally, but the session no longer reports to the dashboard and its messaging tools stop working.
+
+To fix it:
+
+1. Download the current binary (see [Native binaries](#native-binaries)) and put it where the old one was, or run `ai-beacon install` again from the new binary so the hooks point at it (`binary_path` in `config.toml`). A binary saved anywhere else leaves hook-launched sessions on the old one.
+2. On Windows a running `ai-beacon.exe` cannot be overwritten: exit the sessions first, or rename the old file and then download.
+3. Restart each session that shows the row: exit the agent and start it again (`claude --continue` resumes the conversation). A running session keeps the binary it started with, so it cannot pick up the new one by itself.
+
+Until then the wrapper stops calling the dashboard, so an old session does not use up the sign-in allowance of your network. The wrapper log shows `dashboard rejected this client as outdated` with the client's and the dashboard's protocol numbers (these are not the `ai-beacon version` numbers). Messaging tools tell the agent to ask you to update and restart.
+
+## The status bar says "rate limited" or "sign-in failing"
+
+A red row ending in `rate limited, retrying in <N>s` means the dashboard is refusing new sign-ins from your network for a while: too many came from the same address in the last minute (several sessions starting at once, or a dashboard restart that signed every session out). The wrapper waits as long as the dashboard asks, then signs in again on its own; no action is needed. Sessions that are already signed in keep reporting meanwhile. Messaging tools answer `dashboard rate limited; messaging unavailable for <N>s` during the wait.
+
+A red row ending in `sign-in failing, retrying in <N>s` means the dashboard rejected the session's credentials. The wrapper retries with growing pauses, up to five minutes apart. If it does not clear after a dashboard restart, check the credentials the session uses (see [Updating the dashboard URL or token](#updating-the-dashboard-url-or-token)) and the wrapper log (see [Logs](#logs)). Messaging tools tell the agent to point you at the log.
 
 ## Logs
 

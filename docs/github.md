@@ -2,7 +2,7 @@
 
 When an agent host has the [`gh` CLI](https://cli.github.com) installed and authenticated, ai-beacon automatically enriches each session's heartbeat with GitHub state: the branch's pull request, its checks, mergeability, and draft/state flags. The dashboard surfaces all of that on the session card.
 
-Plus, the dashboard ships two opinionated **workflow buttons** — *Implement Issue* and *Review PR* — that spawn a session pre-loaded with a battle-tested prompt template. You can override those templates per-host.
+Plus, the dashboard's **New session** dialog ships two opinionated workflow modes, *Implement issue* and *Review PR*, that spawn a session pre-loaded with a battle-tested prompt template. You can override those templates per-host.
 
 - [Setup](#setup)
 - [What the session card shows](#what-the-session-card-shows)
@@ -53,12 +53,12 @@ This works out of the box. The convention assumed is `origin` = your fork, `upst
 
 ## Workflow prompts
 
-The dashboard's session-spawn UI exposes two workflows out of the box:
+Click the **+** button in a device's header (its tooltip reads *Start session on {device}*) to open the **New session** dialog. Pick a project, then a mode: *Plain session*, *Implement issue* or *Review PR*. The workflow modes stay disabled until the project reports that `gh` (or `glab`) can serve them. The dialog remembers your last project and mode per device, so a repeat run is a few keystrokes: Enter picks the remembered project, then pick the issue or PR and press Enter again.
 
-| Workflow | Trigger | What the agent receives as its initial prompt |
-|----------|---------|------------------------------------------------|
-| **Implement Issue** | Pick an issue from the picker (search or paste its URL), click *Implement* | A multi-step plan-then-implement template with TDD enforcement, ask-before-assume gate, scope guard, and multi-persona peer review |
-| **Review PR** | Pick a PR (search or paste its URL), click *Review* | A code-review template that walks the diff, raises blockers, and produces a summary. It **presents the full review for your approval and posts nothing to GitHub until you explicitly sign off** |
+| Mode | Trigger | What the agent receives as its initial prompt |
+|------|---------|------------------------------------------------|
+| **Implement issue** | Pick an issue from the list (*Assigned to you* by default; search or paste its URL), click *Implement issue* | A multi-step plan-then-implement template with TDD enforcement, ask-before-assume gate, scope guard, and multi-persona peer review |
+| **Review PR** | Pick a PR (*Open PRs* by default; search or paste its URL), click *Review PR* | A code-review template that walks the diff, raises blockers, and produces a summary. It **presents the full review for your approval and posts nothing to GitHub until you explicitly sign off** |
 
 Two things the *Review PR* template does on your machine are worth knowing about:
 
@@ -67,11 +67,11 @@ Two things the *Review PR* template does on your machine are worth knowing about
 
 The full built-in templates are non-trivial — they encode several engineering-discipline guardrails that took real iteration to land. You usually don't need to touch them.
 
-To save the agent its first turn, the issue/PR body and discussion are **preloaded into the prompt at spawn time** (fetched on the agent host with your `gh` credentials) and fenced as untrusted data. The built-in templates still keep the `gh … view` command as a refresh/fallback, so if the preload can't be fetched the agent loads it itself — you'll see a brief *"Couldn't preload … details"* note and a small marker on the session card, and nothing else changes.
+To save the agent its first turn, the issue/PR body and discussion (inline review threads included) are **preloaded into the prompt at spawn time** (fetched on the agent host with your `gh` credentials) and fenced as untrusted data. The built-in templates still keep the `gh … view` command as a refresh/fallback, so if the preload can't be fetched the agent loads it itself — you'll see a brief *"Couldn't preload … details"* note and a small marker on the session card, and nothing else changes.
 
 If the forge CLI isn't installed or authenticated for the project's remote, no workflow can run there — the dialog says so and gives you the command to run on the agent machine: `gh auth login` for github.com, and for any other host, `glab auth login --hostname <host>` *if that host runs GitLab*. The hostname alone doesn't say which forge is behind it, so anywhere off github.com the command is offered conditionally: GitHub Enterprise, Gitea and Bitbucket aren't supported, and logging `glab` into one of them would mislabel the project as GitLab.
 
-> **GitLab.** The same two workflows work on a GitLab checkout when the [`glab` CLI](https://gitlab.com/gitlab-org/cli) is installed and authenticated (`glab auth login`) for the project's host, including self-managed instances. The prompt is forge-accurate: it uses `glab` commands (`glab issue view`, `glab mr view`/`diff`, and `glab mr note` for posting a review), says "merge request" / `!123`, and preloads the issue/MR body plus discussion notes via `glab api`. GitLab has no inline-comment review, so the *Review MR* post is a single MR note with the file:line references in its body. In the spawn dialog you can search GitLab issues/MRs or paste an issue/MR URL (self-managed hosts included); on a GitLab project the picker brands its copy to "merge request" / `!123` (and the card to *Review MR*), and it ignores a pasted GitHub PR URL. Everything else — the guardrails, the consent gate, the placeholders — is identical.
+> **GitLab.** The same two workflows work on a GitLab checkout when the [`glab` CLI](https://gitlab.com/gitlab-org/cli) is installed and authenticated (`glab auth login`) for the project's host, including self-managed instances. The prompt is forge-accurate: it uses `glab` commands (`glab issue view`, `glab mr view`/`diff`, and `glab mr note` for posting a review), says "merge request" / `!123`, and preloads the issue/MR body plus its full discussion via `glab api`: every thread, inline diff comments included, each with its file:line anchor and resolved state. The *Review MR* post is an overview note plus one diff note per finding (`glab mr note create --file <path> --line <n>`, an experimental glab feature); on a glab without those flags the file:line references go in the overview note instead. In the New session dialog you can search GitLab issues/MRs or paste an issue/MR URL (self-managed hosts included); on a GitLab project the picker brands its copy to "merge request" / `!123` (and the mode to *Review MR*), and it ignores a pasted GitHub PR URL. Everything else — the guardrails, the consent gate, the placeholders — is identical.
 
 ### Customizing a workflow
 
@@ -100,7 +100,7 @@ The following placeholders are substituted at spawn time:
 | `{repo}` | `owner/repo` (GitHub) or `group/…/project` (GitLab) derived from the issue or PR URL |
 | `{branch}` | Branch name being worked on |
 | `{issue_context}` | The issue body + comments, preloaded at spawn (empty if it couldn't be fetched) |
-| `{pr_context}` | The PR body + comments + reviews, preloaded at spawn (empty if it couldn't be fetched) |
+| `{pr_context}` | The PR body + comments + reviews + inline review threads, preloaded at spawn (empty if it couldn't be fetched) |
 
 Missing placeholders are left as the literal `{placeholder}` so the signal is visible to the agent rather than silently dropped — except `{issue_context}` / `{pr_context}`, which collapse to nothing when their content couldn't be preloaded (so your template never shows a stray token). The override applies to every session spawned on the host that owns the `config.toml`. Removing the section restores the built-in default on the next session.
 
@@ -110,4 +110,4 @@ If you want to spawn from the dashboard with a one-off prompt that ignores both 
 
 ## Privacy
 
-GitHub data goes from your agent host's `gh` CLI straight to the dashboard via the agent → server WebSocket. The dashboard caches just enough to render — PR number, state, checks rollup, mergeability, draft flag, branch. Issue and PR titles for the workflow picker are fetched live; nothing is stored on the server beyond the running session's heartbeat.
+GitHub data goes from your agent host's `gh` CLI straight to the dashboard via the agent → server WebSocket. The dashboard caches just enough to render — PR number, state, checks rollup, mergeability, draft flag, branch. Issue and PR titles for the New session dialog are fetched live; nothing is stored on the server beyond the running session's heartbeat.
