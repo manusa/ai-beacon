@@ -89,7 +89,7 @@ The Space's `README.md` frontmatter sets `hf_oauth_scopes: [email]` — **not** 
 
 No HF-specific code lives in `pkg/auth/` — the recipe is a Dockerfile + entrypoint that maps env vars onto the same flags every OIDC deployment uses. The ai-beacon binary never learns it is running on HF; the only HF-shaped surface in the codebase is the [`huggingface-space/`](../huggingface-space/README.md) recipe directory and an entry in the issuer-host → display-name table (parallel to `Okta`, `GitLab`, etc.) so the sign-in button reads "Sign in with Hugging Face" without operator configuration.
 
-For the deployment steps see [`huggingface-space/README.md`](../huggingface-space/README.md) and the [main README's Deploy section](../README.md#deploy-to-hugging-face-spaces).
+For the deployment steps see [`huggingface-space/README.md`](../huggingface-space/README.md) and [Deploying § Hugging Face Spaces](deploy.md#hugging-face-spaces).
 
 If you're integrating with any other environment that ships OIDC config under the legacy `OPENID_PROVIDER_URL` / `OAUTH_*` names — Cloud Run with an identity-aware proxy, a vendored OAuth-proxy template, etc. — those env vars are honored as fallbacks by the binary itself; you do not need to re-prefix them to `AI_BEACON_OIDC_*`.
 

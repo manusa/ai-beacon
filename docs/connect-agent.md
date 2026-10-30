@@ -63,9 +63,9 @@ Snapshot builds report `0.0.0-snapshot.<YYYYMMDDHHMMSS>`, the UTC time of the co
 
 1. **Resolves the dashboard URL and auth token.** Precedence: `--url` flag → `$AI_BEACON_URL` → existing `config.toml` → `http://localhost:8080`. The token follows the same chain, ending at `$AI_BEACON_AUTH_TOKEN`. If a token is provided, it's written to `<data-dir>/token` (mode `0600`).
 2. **Writes `config.toml`.** Stored at `<data-dir>/config.toml` (see [Data directory layout](configuration.md#data-directory-layout) for the per-OS location). Records the URL, the path to the token file, and the absolute path of the `ai-beacon` binary itself.
-3. **Installs hooks for each registered agent plugin.** For Claude Code, this means editing `~/.claude/settings.json` so each `claude` invocation transparently wraps itself in `ai-beacon session`. Hooks are tagged with the `# ai-beacon-managed` marker so `uninstall` can find and remove them without disturbing your own edits.
+3. **Installs hooks for each registered agent plugin.** For Claude Code, this means editing `~/.claude/settings.json` so each `claude` invocation reports its session to the dashboard. Hooks are tagged with the `# ai-beacon-managed` marker so `uninstall` can find and remove them without disturbing your own edits.
 
-After install, running the agent normally (`claude`) is equivalent to `ai-beacon session -- claude`. No env vars need to be exported in the agent's shell — the hook reads them from `config.toml`.
+After install, running the agent normally (`claude`) puts the session on the dashboard marked **Monitor only**: you see its state and details, but you can't attach its terminal from the browser. For that, start it through the wrapper: `ai-beacon session -- claude`. Neither needs env vars exported in the agent's shell; both read them from `config.toml`.
 
 > The `--yes` flag skips the consent prompt. Useful for CI / scripted setup.
 

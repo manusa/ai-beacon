@@ -52,8 +52,7 @@ commands:
         echo "Token (for agents):"
         oc get secret ai-beacon-credentials -o go-template='{{index .data "token" | base64decode}}' 2>/dev/null && echo "" || echo "Not found - deployment may not be complete"
         echo ""
-        echo "Password (for dashboard login):"
-        oc get secret ai-beacon-credentials -o go-template='{{index .data "password" | base64decode}}' 2>/dev/null && echo "" || echo "Not found - deployment may not be complete"
+        echo "Dashboard login: sign in with your OpenShift account (no password)."
       group:
         kind: run
 

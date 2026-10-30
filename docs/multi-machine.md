@@ -54,7 +54,7 @@ The agent token (`AI_BEACON_AUTH_TOKEN`) is the same on every host — the serve
 
 There is no per-user token rotation today — PSK is the only agent auth mode in the standalone server. Rotating means generating a new token on the server and re-running `install` on every agent host.
 
-> If you're deploying with the [Helm chart](../README.md#deploy-to-any-kubernetes-cluster) on persistent storage and leave `auth.token` unset, the token is auto-generated. Retrieve it with:
+> If you're deploying with the [Helm chart](deploy.md#any-kubernetes-cluster) on persistent storage and leave `auth.token` unset, the token is auto-generated. Retrieve it with:
 >
 > ```bash
 > kubectl exec -n ai-beacon deploy/ai-beacon -- cat /data/token

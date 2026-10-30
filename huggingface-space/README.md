@@ -51,9 +51,9 @@ The Space wraps the published `ghcr.io/manusa/ai-beacon:latest` image. The `entr
 6. Connect an agent: install the ai-beacon CLI on your machine and point it at the Space:
 
    ```bash
-   ai-beacon install \
-     --url https://<your-user>-<space-name>.hf.space \
-     --token <the AI_BEACON_AUTH_TOKEN you set>
+   AI_BEACON_URL=https://<your-user>-<space-name>.hf.space \
+   AI_BEACON_AUTH_TOKEN='<the AI_BEACON_AUTH_TOKEN you set>' \
+     ai-beacon install
    ```
 
    See [Connecting an agent](https://github.com/manusa/ai-beacon/blob/main/docs/connect-agent.md) for the rest.

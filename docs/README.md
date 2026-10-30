@@ -4,6 +4,7 @@ The [main README](../README.md) covers deploy and first-session onboarding. Past
 
 | Page | When you need it |
 |------|------------------|
+| [Deploying the dashboard](deploy.md) | Kubernetes with Helm, Hugging Face Spaces, or the native binary, beyond the README's Docker and Developer Sandbox quick starts. |
 | [Configuration](configuration.md) | Every environment variable, CLI flag, and Helm value. |
 | [Connecting an agent](connect-agent.md) | What `ai-beacon install` does, rotating credentials, running the wrapper without install, uninstalling, "session not appearing" diagnostics. |
 | [Multi-machine setup](multi-machine.md) | Device names, multiple hosts pointing at one dashboard, worktree layouts, `AI_BEACON_PROJECTS_DIR`. |
