@@ -6,6 +6,8 @@ This page covers the three parts of that setup: naming machines, pointing them a
 
 - [The one-dashboard, many-agents model](#the-one-dashboard-many-agents-model)
 - [Naming devices](#naming-devices)
+  - [Windows and WSL](#windows-and-wsl)
+- [An Oracle per device](#an-oracle-per-device)
 - [Sharing one token across hosts](#sharing-one-token-across-hosts)
 - [Spawning sessions from the dashboard](#spawning-sessions-from-the-dashboard)
   - [Environment of dashboard-started sessions](#environment-of-dashboard-started-sessions)
@@ -39,7 +41,7 @@ Every session reports a device name in its heartbeats, and the dashboard groups 
 1. `--device <name>` on `ai-beacon session`.
 2. `$AI_BEACON_DEVICE_NAME`.
 3. `device_name` in `config.toml` (in the [data directory](configuration.md#data-directory-layout)).
-4. The system hostname.
+4. The system hostname, with `-wsl` appended inside WSL.
 5. Literal `"unknown"`.
 
 You can also **rename a device live** from the dashboard: click the device-group header and type a new name. The change propagates within one heartbeat tick (≤ 5 s) and is persisted to `config.toml` on the affected host, so it survives restarts.
@@ -47,6 +49,25 @@ You can also **rename a device live** from the dashboard: click the device-group
 > **Pinned names are immune to dashboard renames.** If a session reported a name that came from `--device` or `$AI_BEACON_DEVICE_NAME`, the dashboard can't rename it — those sources are treated as operator-pinned. To rename a pinned session, restart it with the new flag/env value. Hostname- and `config.toml`-sourced names are renameable.
 
 Duplicate names across hosts are allowed and the dashboard merges them into one group. That's fine if you actually want a `dev` row spanning two boxes; rename one if you don't.
+
+Each device's header also shows its operating system as a text label: **macOS**, **Linux**, **Windows** or **WSL**. A merged group spanning two systems shows both, such as `Windows / WSL`.
+
+### Windows and WSL
+
+A Windows machine and the WSL distribution inside it are two separate devices: sessions in WSL report the OS `WSL`, and when their name would come from the hostname they are named `<hostname>-wsl`, so a Windows host `nuc-001` and its WSL show up as `nuc-001` and `nuc-001-wsl` with no configuration. WSL is recognized from `WSL_DISTRO_NAME` or from a Microsoft kernel release. A name you set with `--device`, `$AI_BEACON_DEVICE_NAME` or `device_name` in `config.toml` is used as given.
+
+## An Oracle per device
+
+An **Oracle** is the long-lived session that owns a device: you ask it for work on that machine and it hands the jobs to its own subagents. Start one from the device's projects root with `--oracle`:
+
+```bash
+cd ~/projects
+ai-beacon session --oracle -- claude
+```
+
+- An Oracle is named `Oracle`, unless you name it on the agent's own command line (`ai-beacon session --oracle -- claude -n FedoraOracle`): then that name shows on its card. Rename it from its card on the dashboard like any other session; it keeps answering to `oracle@<device>`.
+- Other sessions reach it as `oracle@<device>`, for example "tell oracle@workstation to review the open PRs" (see [Inter-session messaging](inter-session-messaging.md)). If a device runs two Oracles, the target is ambiguous and your agent asks which one you mean.
+- On the dashboard the Oracle comes first in its device group and carries an **Oracle** chip. Filters hide it like any other session. A stale Oracle loses its place at the top, and a device without one shows nothing in its place.
 
 ## Sharing one token across hosts
 

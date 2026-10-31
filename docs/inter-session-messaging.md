@@ -30,8 +30,11 @@ same path, and the exchange stays threaded.
 
 ## Good to know
 
-- **Discovery.** You address sessions by their handle (custom name or project),
-  so you refer to them the way you already think of them. Agents use each session's
+- **Discovery.** You address sessions by their handle: the custom name, else the
+  name you gave the agent (Claude Code's `/rename`), else the project, so you refer
+  to them the way you already think of them. A device's
+  [Oracle](multi-machine.md#an-oracle-per-device) also answers to
+  `oracle@<device>`. Agents use each session's
   id under the hood (to reply, and to tell apart two sessions on one repo), but you
   never have to type one.
 - **Busy recipients.** If the target session is mid-task, the message waits and is

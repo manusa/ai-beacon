@@ -16,7 +16,7 @@ These apply to the machine running the wrapped coding agent (`ai-beacon session 
 |----------|---------|---------|
 | `AI_BEACON_URL` | Dashboard server URL. | `http://localhost:8080` |
 | `AI_BEACON_AUTH_TOKEN` | Bearer token for agent → dashboard heartbeats. The dashboard generates this on first boot; copy it from the setup guide. | _(required)_ |
-| `AI_BEACON_DEVICE_NAME` | Friendly device name shown on session cards and the device-grouped grid. | hostname |
+| `AI_BEACON_DEVICE_NAME` | Friendly device name shown on session cards and the device-grouped grid. | hostname (`<hostname>-wsl` inside WSL, see [Windows and WSL](multi-machine.md#windows-and-wsl)) |
 | `AI_BEACON_PROJECTS_DIR` | Base directories of your repositories. Enables the dashboard's **New session** dialog and its worktree workflows. Accepts a single path or a list joined by the OS path separator (`:` on Unix, `;` on Windows) for multiple roots — e.g. `~/work:~/oss`. Disabled when unset. | _(unset)_ |
 | `AI_BEACON_WORKTREE_LOCATION` | Where new worktrees are created relative to the source repo. `sibling` (default) places them next to the repo; `subdirectory` places them inside it. | `sibling` |
 | `AI_BEACON_LOG_FILE` | Override the log file location. Absolute path, or a bare filename rooted under `<data-dir>/logs/`. | _(unset, logs to data dir)_ |
@@ -54,6 +54,7 @@ A few things worth knowing:
 - **Already export `JIRA_*` for another tool?** If the `AI_BEACON_JIRA_*` vars and the config file are all unset, ai-beacon falls back to the generic `JIRA_URL`, `JIRA_USER` (read as your account email), and `JIRA_TOKEN` many Jira tools use. The `AI_BEACON_`-prefixed vars and the config file always take precedence. The base URL is still required from one of these sources — it is **never** inferred from the ticket URL you paste, so the token only ever reaches the instance you configured.
 - **Paste the URL; you can't search Jira here.** The typeahead searches GitHub and GitLab only, and the field says so if you type a bare ticket key.
 - **If the read fails, the session still starts.** A network blip, an expired token or a deleted ticket doesn't block the spawn — you get a *"Couldn't read ABC-123 from Jira"* notice, and the agent opens by asking you for the ticket rather than guessing at it.
+- **Reviews read the tickets a PR names.** The *Review PR* mode preloads the Jira tickets named in the PR's title, description or branch name through the same settings; see [GitHub integration](github.md#workflow-prompts). Without these settings the review still starts, and the agent is told which tickets to read with whatever Jira access it has.
 
 If the dialog says the agent has no Jira credentials, the agent process is not seeing your settings. Either export the variables in the shell profile that launches your agent and restart the session, **or** add `jira_url` and `jira_token_path` (plus `jira_email` on Atlassian Cloud) to the config file below — the config file is re-read each time the dialog asks, so that route needs no restart.
 
@@ -65,6 +66,7 @@ If the dialog says the agent has no Jira credentials, the agent process is not s
 |------|---------|
 | `--dashboard-url <url>` | Override `$AI_BEACON_URL` for this run. |
 | `--device <name>` | Override `$AI_BEACON_DEVICE_NAME`. |
+| `--oracle` | Run the session as the device's Oracle: it is named `Oracle`, other sessions reach it as `oracle@<device>`, and the dashboard pins it first in its device group. See [An Oracle per device](multi-machine.md#an-oracle-per-device). |
 | `--project <dir>` | Project directory shown on the session card. Defaults to the current working directory. |
 | `--projects-dir <dirs>` | Override `$AI_BEACON_PROJECTS_DIR`. Accepts a single path or a list joined by `:` (Unix) / `;` (Windows) for multiple roots. |
 | `--worktree-location sibling\|subdirectory` | Override `$AI_BEACON_WORKTREE_LOCATION`. |

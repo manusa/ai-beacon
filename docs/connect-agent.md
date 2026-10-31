@@ -15,6 +15,7 @@ This page picks up after that. It documents the download URLs for the six native
 - [Uninstalling](#uninstalling)
 - [Windows consoles and raw escape codes](#windows-consoles-and-raw-escape-codes)
 - [The terminal title shows the agent's state](#the-terminal-title-shows-the-agents-state)
+- [Subagents on the session card](#subagents-on-the-session-card)
 - [A smaller browser is watching](#a-smaller-browser-is-watching)
 - ["Session not appearing" troubleshooting](#session-not-appearing-troubleshooting)
 - [The terminal keeps disconnecting](#the-terminal-keeps-disconnecting)
@@ -139,6 +140,15 @@ When the agent reports its own state, `ai-beacon session` puts a mark in front o
 The mark goes away when the agent stops reporting, as Claude Code does on `/exit`.
 
 The dashboard shows the same state. Claude Code 2.1.295 and later report it on macOS and Linux. On Windows, with `CLAUDE_CODE_DISABLE_TERMINAL_TITLE` set, or with agents that don't report their state, the title keeps the agent's own text and the dashboard state comes from the agent's hooks. While the dashboard can't be reached, the title reads `⚠ ai-beacon offline` instead.
+
+## Subagents on the session card
+
+When the agent hands work to its own subagents (Claude Code subagents, background agents and forks, or opencode subagent sessions), the session card counts them:
+
+- `Idle · 3 subagents running` when the agent waits for input while its subagents keep working, or `Working · 2 subagents running` while it works too;
+- `Idle · 1 result waiting` when a subagent finished while the agent was idle. It clears on the agent's next turn, or when you open the session's terminal.
+
+The card keeps its idle or working color, the session stays under the **Idle** filter, and the **Done** notification waits until no subagent is running. Claude Code needs the `SubagentStart` and `SubagentStop` hooks: run `ai-beacon install` again after upgrading to add them. opencode picks up the updated plugin the next time it starts.
 
 ## A smaller browser is watching
 

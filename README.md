@@ -4,7 +4,7 @@
 
 <div align="center">
 
-[Quick start](#quick-start) · [Features](#features) · [Deploy](#deploy) · [Docs](docs/README.md)
+[Quick start](#quick-start) · [Features](#features) · [Deploy](#deploy) · [Docs](docs/README.md) · [▶ Video](https://youtu.be/XnsqY0ejVG4)
 
 </div>
 
@@ -13,6 +13,8 @@ AI Beacon is a self-hosted dashboard for developers who run several Claude Code 
 *Early access: binaries, the container image and the Helm chart are free to use today; the source follows after this validation phase.*
 
 ![AI Beacon: a session needs permission, you attach from your phone, approve it, and the agent gets back to work](docs/assets/demo.gif)
+
+<p align="center"><b><a href="https://youtu.be/XnsqY0ejVG4">▶ Watch the quick tour on YouTube</a></b></p>
 
 <div align="center">
 
