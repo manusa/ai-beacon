@@ -34,7 +34,11 @@ same path, and the exchange stays threaded.
   name you gave the agent (Claude Code's `/rename`), else the project, so you refer
   to them the way you already think of them. A device's
   [Oracle](multi-machine.md#an-oracle-per-device) also answers to
-  `oracle@<device>`. Agents use each session's
+  `oracle@<device>`, where the device can be typed in a short form: lowercase,
+  letters and digits only, with dashes in between, so the Oracle on
+  `🐧 nuc-001 (WSL)` is `oracle@nuc-001-wsl`. Your agent sees that short form in
+  its session list. A bare `oracle` reaches your own system's Oracle when it has
+  exactly one, even with Oracles on other systems. Agents use each session's
   id under the hood (to reply, and to tell apart two sessions on one repo), but you
   never have to type one.
 - **Busy recipients.** If the target session is mid-task, the message waits and is
@@ -44,4 +48,8 @@ same path, and the exchange stays threaded.
   session and treated as untrusted input, so the recipient uses judgment before
   acting. Every message is also kept in a durable log.
 - **Scope today.** Claude Code and OpenCode sessions can both send and receive.
-  Both sessions must report to the same dashboard.
+  Both sessions must report to the same dashboard. OpenCode 2.0 and 2.1 offer the
+  messaging tools only inside their Code Mode (the model calls them from code it
+  runs in the `execute` tool); OpenCode 2.2 and later, like OpenCode 1, offer them
+  as ordinary tools. See
+  [opencode 2](connect-agent.md#opencode-2) for details.

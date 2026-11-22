@@ -100,24 +100,24 @@ ai-beacon uses WebSockets for dashboard push and terminal attach. OpenShift Rout
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Affinity rules. |
-| allowedUsers | list | `[]` | Usernames permitted to sign in to the dashboard (case-insensitive). Required when `oauthProxy.enabled=true`: rendered into ai-beacon's `--allowed-users` flag and matched against the `X-Forwarded-User` value forwarded by the OpenShift OAuth Proxy (the cluster username from `oc whoami`). Without it the proxy-header authenticator admits every cluster user with OAuth access; the chart `validate` helper rejects the combination at install time. Example: `--set allowedUsers="{alice,bob}"`. See `docs/specs/ai-beacon/auth/implemented-features.md` § User Allowlist. |
-| auth | object | `{"existingSecret":"","password":"","token":""}` | / External Secrets Operator. |
-| auth.existingSecret | string | `""` | no Secret is rendered and the Deployment references this Secret directly. |
+| allowedUsers | list | `[]` | Usernames permitted to sign in to the dashboard (case-insensitive). Required when `oauthProxy.enabled=true`: rendered into ai-beacon's `--allowed-users` flag and matched against the `X-Forwarded-User` value forwarded by the OpenShift OAuth Proxy (the cluster username from `oc whoami`). Without it the proxy-header authenticator admits every cluster user with OAuth access; the chart `validate` helper rejects the combination at install time. Example: `--set allowedUsers="{alice,bob}"`. |
+| auth | object | `{"existingSecret":"","password":"","token":""}` | Authentication secrets for ai-beacon. Three modes — auto-generate (default), chart-rendered Secret, or externally-managed Secret. 1. Auto-generate (default): leave `token`, `password`, and `existingSecret` empty. The server generates both on first boot and persists them to the data volume. Requires `persistence.enabled: true`. 2. Chart-rendered Secret: set `token` and/or `password`. The chart renders a Secret named after the release; the Deployment reads each key as an individual env var via `secretKeyRef`. 3. Existing Secret: set `existingSecret` to the name of a pre-existing Secret with keys `token` and `password`. Useful for GitOps / SealedSecrets / External Secrets Operator. |
+| auth.existingSecret | string | `""` | Name of a pre-existing Secret with keys `token` and `password`. When set, no Secret is rendered and the Deployment references this Secret directly. |
 | auth.password | string | `""` | Browser login password (`AI_BEACON_AUTH_PASSWORD`). |
 | auth.token | string | `""` | Agent bearer token (`AI_BEACON_AUTH_TOKEN`). |
-| defaultPodSecurityContext | object | `{"seccompProfile":{"type":"RuntimeDefault"}}` | `restricted-v2` SCC can inject namespace-range values. |
+| defaultPodSecurityContext | object | `{"seccompProfile":{"type":"RuntimeDefault"}}` | Default Pod SecurityContext applied when `podSecurityContext` is empty. Intentionally omits `runAsUser` and `fsGroup` so OpenShift's `restricted-v2` SCC can inject namespace-range values. |
 | defaultSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"runAsNonRoot":true}` | Default container SecurityContext applied when `securityContext` is empty. |
-| env | list | `[]` | `env` entries, supports value / valueFrom / template expressions via `tpl`. |
+| env | list | `[]` | Extra environment variables for the container. Standard Kubernetes `env` entries, supports value / valueFrom / template expressions via `tpl`. |
 | envFrom | list | `[]` | Extra `envFrom` sources for the container (ConfigMap / Secret refs). |
 | extraContainers | list | `[]` | Extra sidecar containers. |
 | extraVolumeMounts | list | `[]` | Extra volumeMounts on the main container. |
 | extraVolumes | list | `[]` | Extra volumes on the Deployment. |
 | fullnameOverride | string | `""` | Override the fully-qualified release name. |
 | image | object | `{"pullPolicy":"Always","registry":"ghcr.io","repository":"manusa/ai-beacon","version":"latest"}` | Container image. |
-| image.pullPolicy | string | `"Always"` | `IfNotPresent` once you pin `version` to an immutable tag or digest. |
+| image.pullPolicy | string | `"Always"` | Image pull policy. Defaults to `Always` so that mutable tags like `latest` are re-pulled on every pod start, which matches the pre-launch workflow (ghcr publishes `:latest` on each merge). Switch to `IfNotPresent` once you pin `version` to an immutable tag or digest. |
 | image.registry | string | `"ghcr.io"` | Image registry. |
 | image.repository | string | `"manusa/ai-beacon"` | Image repository. |
-| image.version | string | `"latest"` | kubernetes-mcp-server chart convention. |
+| image.version | string | `"latest"` | Image tag (`latest`, `v0.1.0`) or full `sha256:...` digest. The chart renders the image reference with `@` for digests and `:` for tags. Named `version` rather than `tag` to match the upstream kubernetes-mcp-server chart convention. |
 | imagePullSecrets | list | `[]` | Image pull secrets, more information can be found here: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/ |
 | ingress | object | `{"annotations":{},"className":"","enabled":true,"host":"","path":"/","pathType":"ImplementationSpecific","tls":[]}` | Ingress configuration. Ignored when `openshift: true` (use `route` instead). |
 | ingress.annotations | object | `{}` | Annotations for the Ingress. |
@@ -126,48 +126,49 @@ ai-beacon uses WebSockets for dashboard push and terminal attach. OpenShift Rout
 | ingress.host | string | `""` | Host for the Ingress rule. Supports template expressions. |
 | ingress.path | string | `"/"` | Path for the Ingress rule. |
 | ingress.pathType | string | `"ImplementationSpecific"` | PathType for the Ingress rule. |
-| ingress.tls | list | `[]` | secretName: ai-beacon-tls |
+| ingress.tls | list | `[]` | TLS configuration, matches the Kubernetes Ingress `spec.tls` shape. Example: `[{hosts: [ai-beacon.example.com], secretName: ai-beacon-tls}]`. |
 | initContainers | list | `[]` | Init containers. |
-| livenessProbe | object | `{"httpGet":{"path":"/login","port":"http"},"initialDelaySeconds":5,"periodSeconds":15}` | the server is ready. |
+| livenessProbe | object | `{"httpGet":{"path":"/login","port":"http"},"initialDelaySeconds":5,"periodSeconds":15}` | Liveness probe. `/login` is unauthenticated and returns 200 as soon as the server is ready. |
 | nameOverride | string | `""` | Override the chart name. |
 | nodeSelector | object | `{}` | Node selector. |
+| oauthProxy | object | `{"enabled":false,"existingCookieSecret":"","image":"quay.io/openshift/origin-oauth-proxy:4.22","imagePullPolicy":"IfNotPresent","skipAuthRegex":"^/api/v1/agent/"}` | OAuth Proxy sidecar configuration. When enabled, an OAuth Proxy container fronts ai-beacon and gates browser traffic through the cluster's OpenShift OAuth provider (requires `openshift: true`). M2M agent traffic (under `/api/v1/agent/`) skips proxy auth and remains protected by ai-beacon's `AgentAuthenticator`. Defense in depth: ai-beacon binds to 127.0.0.1 inside the pod so the only network path is through the proxy on `:8443`. For a typical install, which also needs `allowedUsers`, see the chart README's "OpenShift with OAuth Proxy" section. |
 | oauthProxy.enabled | bool | `false` | Whether to render the OAuth Proxy sidecar. When true, the chart also flips ai-beacon's `--address` to `127.0.0.1:8080`, switches the Service to target the proxy port (`:8443`), annotates the ServiceAccount for OpenShift OAuth redirects, and (when `openshift: true`) flips the Route to TLS reencrypt. |
 | oauthProxy.existingCookieSecret | string | `""` | Existing Secret name with key `cookie-secret` for OAuth Proxy. When empty, the chart renders its own Secret with a random value; `helm upgrade` regenerates it and users re-authenticate via OAuth. |
 | oauthProxy.image | string | `"quay.io/openshift/origin-oauth-proxy:4.22"` | OAuth Proxy container image. Pinned by tag (no entitlement required); override with `registry.redhat.io/openshift4/ose-oauth-proxy-rhel9` on entitled clusters. |
 | oauthProxy.imagePullPolicy | string | `"IfNotPresent"` | Pull policy for the OAuth Proxy image. Independent of `image.pullPolicy` so a locally-built ai-beacon image (`Never`) does not also disable pulls of the upstream proxy image. |
 | oauthProxy.skipAuthRegex | string | `"^/api/v1/agent/"` | OAuth Proxy `--skip-auth-regex` value (generated; do not edit). `make helm-gen-oauth-proxy-config` writes this from the Go-side `server.AgentRoutePrefix` constant; CI fails on drift. |
-| openshift | bool | `false` | rendered (see `route` values below) and the `Ingress` is not rendered. |
-| persistence | object | `{"accessModes":["ReadWriteOnce"],"annotations":{},"enabled":true,"existingClaim":"","resourcePolicy":"keep","size":"1Gi","storageClass":""}` | `auth.password` / `auth.existingSecret`. |
+| openshift | bool | `false` | Enable OpenShift-specific resources. When true, an OpenShift `Route` is rendered (see `route` values below) and the `Ingress` is not rendered. |
+| persistence | object | `{"accessModes":["ReadWriteOnce"],"annotations":{},"enabled":true,"existingClaim":"","resourcePolicy":"keep","size":"1Gi","storageClass":""}` | Persistent storage for the `/data` directory (token and password cache, future session history). Required when auth values are auto-generated. Can be disabled when credentials are injected via `auth.token` / `auth.password` / `auth.existingSecret`. |
 | persistence.accessModes | list | `["ReadWriteOnce"]` | PVC access modes. |
 | persistence.annotations | object | `{}` | Annotations for the rendered PVC (merged after `resourcePolicy`). |
-| persistence.enabled | bool | `true` | When false, `/data` is backed by an `emptyDir` volume (ephemeral). |
-| persistence.existingClaim | string | `""` | at `/data` by the pod's UID/GID. |
-| persistence.resourcePolicy | string | `"keep"` | always delete the PVC manually with `kubectl delete pvc` afterwards. |
+| persistence.enabled | bool | `true` | Whether to create a PersistentVolumeClaim and mount it at `/data`. When false, `/data` is backed by an `emptyDir` volume (ephemeral). |
+| persistence.existingClaim | string | `""` | Use an existing PVC instead of rendering one. The PVC must be writable at `/data` by the pod's UID/GID. |
+| persistence.resourcePolicy | string | `"keep"` | Value for the `helm.sh/resource-policy` annotation on the PVC. Defaults to `keep` so `helm uninstall` does NOT delete the PVC and the auto-generated credentials survive a reinstall. Set to `""` to restore the default Helm behavior (PVC deleted with the release) — you can always delete the PVC manually with `kubectl delete pvc` afterwards. |
 | persistence.size | string | `"1Gi"` | PVC storage request. |
 | persistence.storageClass | string | `""` | StorageClass to use. Empty string means use the cluster default. |
 | podAnnotations | object | `{}` | Pod annotations. |
 | podLabels | object | `{}` | Pod labels. |
-| podSecurityContext | object | `{}` | `defaultPodSecurityContext`. |
+| podSecurityContext | object | `{}` | Pod SecurityContext override. When non-empty, completely replaces `defaultPodSecurityContext`. |
 | readinessProbe | object | `{"httpGet":{"path":"/login","port":"http"},"initialDelaySeconds":2,"periodSeconds":10}` | Readiness probe. |
-| replicaCount | int | `1` | terminal flows. Leave at `1`. |
+| replicaCount | int | `1` | Number of replicas for the ai-beacon Deployment. ai-beacon keeps session state in-process, so horizontal scaling is not currently supported — running multiple replicas will shard sessions across pods and break dashboard / terminal flows. Leave at `1`. |
 | resources | object | `{"limits":{"cpu":"500m","memory":"256Mi"},"requests":{"cpu":"50m","memory":"64Mi"}}` | Resource requests and limits. |
-| route | object | `{"annotations":{},"enabled":true,"host":"","insecureEdgeTerminationPolicy":"Redirect","path":"","termination":"edge"}` | termination. |
+| route | object | `{"annotations":{},"enabled":true,"host":"","insecureEdgeTerminationPolicy":"Redirect","path":"","termination":"edge"}` | OpenShift Route configuration. Only rendered when `openshift: true` and `route.enabled: true`. WebSockets work out of the box over HAProxy edge termination. |
 | route.annotations | object | `{}` | Annotations for the Route. |
 | route.enabled | bool | `true` | Whether to render a Route when `openshift: true`. |
-| route.host | string | `""` | ingress domain (e.g. `*.apps.<cluster>.openshiftapps.com`). |
+| route.host | string | `""` | Route host. Empty string lets OpenShift auto-assign from the default ingress domain (e.g. `*.apps.<cluster>.openshiftapps.com`). |
 | route.insecureEdgeTerminationPolicy | string | `"Redirect"` | Behavior for insecure traffic: `Allow`, `Redirect`, or `None`. |
 | route.path | string | `""` | Route path. Empty string means all paths. |
 | route.termination | string | `"edge"` | TLS termination: `edge`, `passthrough`, or `reencrypt`. |
-| securityContext | object | `{}` | `defaultSecurityContext`. |
+| securityContext | object | `{}` | Container SecurityContext override. When non-empty, completely replaces `defaultSecurityContext`. |
 | service | object | `{"annotations":{},"port":8080,"targetPort":"http","type":"ClusterIP"}` | Service configuration. |
 | service.annotations | object | `{}` | Annotations for the Service. |
 | service.port | int | `8080` | Service port. |
 | service.targetPort | string | `"http"` | Target port on the pod. Defaults to the named `http` port. |
 | service.type | string | `"ClusterIP"` | Service type. |
-| serviceAccount | object | `{"annotations":{},"create":true,"name":""}` | so no RBAC is created. |
+| serviceAccount | object | `{"annotations":{},"create":true,"name":""}` | ServiceAccount configuration. ai-beacon does not call the Kubernetes API, so no RBAC is created. |
 | serviceAccount.annotations | object | `{}` | Annotations to add to the ServiceAccount. |
 | serviceAccount.create | bool | `true` | Whether to create a ServiceAccount for the release. |
-| serviceAccount.name | string | `""` | when empty and `create` is true. |
+| serviceAccount.name | string | `""` | Name of the ServiceAccount to use. Auto-generated from the release name when empty and `create` is true. |
 | tolerations | list | `[]` | Tolerations. |
 
 ## Updating this README

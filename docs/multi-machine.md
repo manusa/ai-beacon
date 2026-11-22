@@ -66,7 +66,7 @@ ai-beacon session --oracle -- claude
 ```
 
 - An Oracle is named `Oracle`, unless you name it on the agent's own command line (`ai-beacon session --oracle -- claude -n FedoraOracle`): then that name shows on its card. Rename it from its card on the dashboard like any other session; it keeps answering to `oracle@<device>`.
-- Other sessions reach it as `oracle@<device>`, for example "tell oracle@workstation to review the open PRs" (see [Inter-session messaging](inter-session-messaging.md)). If a device runs two Oracles, the target is ambiguous and your agent asks which one you mean.
+- Other sessions reach it as `oracle@<device>`, for example "tell oracle@workstation to review the open PRs" (see [Inter-session messaging](inter-session-messaging.md)). A label with emoji or spaces also works in its short form (`🐧 nuc-001 (WSL)` is `oracle@nuc-001-wsl`), and a session on a device that runs an Oracle reaches it as plain `oracle`. If a device runs two Oracles, the target is ambiguous and your agent asks which one you mean.
 - On the dashboard the Oracle comes first in its device group and carries an **Oracle** chip. Filters hide it like any other session. A stale Oracle loses its place at the top, and a device without one shows nothing in its place.
 
 ## Sharing one token across hosts
@@ -107,7 +107,7 @@ If `AI_BEACON_PROJECTS_DIR` is unset on a host, that host's row stays read-only 
 
 A session you start from the dashboard inherits the environment of the ai-beacon session already running on that machine, so API keys (`ANTHROPIC_API_KEY`, `GH_TOKEN`), proxy settings and `PATH` carry over. If you change an exported variable in your shell profile, restart that running session so new ones pick up the change.
 
-A few variables are left out: terminal-specific ones such as `TERM` and `TMUX` (the new terminal sets its own), `AI_BEACON_LOG_FILE` (each session writes its own log), and server settings such as `AI_BEACON_AUTH_PASSWORD`, `AI_BEACON_ALLOWED_USERS` and `AI_BEACON_OIDC_*`.
+A few variables are left out: terminal-specific ones such as `TERM` and `TMUX` (the new terminal sets its own), `AI_BEACON_LOG_FILE` (a log file belongs to one session), and server settings such as `AI_BEACON_AUTH_PASSWORD`, `AI_BEACON_ALLOWED_USERS` and `AI_BEACON_OIDC_*`.
 
 Everything forwarded is visible to the agent. For Jira, [`jira_token_path`](configuration.md#jira-tickets) keeps the token out of the session's environment.
 

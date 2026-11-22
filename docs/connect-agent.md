@@ -16,6 +16,10 @@ This page picks up after that. It documents the download URLs for the six native
 - [Windows consoles and raw escape codes](#windows-consoles-and-raw-escape-codes)
 - [The terminal title shows the agent's state](#the-terminal-title-shows-the-agents-state)
 - [Subagents on the session card](#subagents-on-the-session-card)
+- [Initial prompts](#initial-prompts)
+- [opencode sessions starting and ending](#opencode-sessions-starting-and-ending)
+- [Your opencode configuration](#your-opencode-configuration)
+- [opencode 2](#opencode-2)
 - [A smaller browser is watching](#a-smaller-browser-is-watching)
 - ["Session not appearing" troubleshooting](#session-not-appearing-troubleshooting)
 - [The terminal keeps disconnecting](#the-terminal-keeps-disconnecting)
@@ -150,6 +154,71 @@ When the agent hands work to its own subagents (Claude Code subagents, backgroun
 
 The card keeps its idle or working color, the session stays under the **Idle** filter, and the **Done** notification waits until no subagent is running. Claude Code needs the `SubagentStart` and `SubagentStop` hooks: run `ai-beacon install` again after upgrading to add them. opencode picks up the updated plugin the next time it starts.
 
+## Initial prompts
+
+A session that starts with a prompt, such as the New session dialog's *Implement issue* and *Review PR* modes, hands it to the agent on its command line. Claude Code gets it as its last argument. opencode 1 and 2 get it as `--prompt` and send it as the first message, except opencode 2.0.0, which only fills it into the input box (see [opencode 2](#opencode-2)). `opencode run` gets it as its message. If your opencode command already passes its own `--prompt`, the session's prompt replaces it.
+
+## opencode sessions starting and ending
+
+A wrapped opencode session shows as idle as soon as opencode has started, so a message sent to it with `tell` is delivered at once, as for Claude Code, instead of waiting for its first prompt. This holds for opencode 1 and for an opencode 2 session with its own server (`--standalone`, which the wrapper adds itself); a wrapped opencode 2 that shares the background service follows what [opencode 2](#opencode-2) describes.
+
+An opencode started without the wrapper gets its card at its first prompt, since opencode has no session before then. When you quit opencode, each of its sessions leaves the dashboard, earlier ones you left with `/new` included: ai-beacon's plugin starts a small background process, `ai-beacon hook watch`, that ends them when opencode exits and then exits itself. Continuing a session later (`opencode -c`, `opencode -s <id>` or the session list) brings its card back at its first prompt, or, if you continue it within two minutes of quitting, at its first prompt after those two minutes: the dashboard ignores a session for two minutes after it ended. A session open in two opencode windows stays on the dashboard until the window that reported it last quits. With opencode 2 run without `--standalone`, the plugin runs in the background service every opencode window shares, so those sessions end when the service stops (`opencode service stop`), not when a window closes. Between prompts nothing reports such a session, so a card left idle for two minutes leaves the dashboard until its next prompt, as for a Claude Code session started without the wrapper.
+
+Both need the current plugin. A wrapped session refreshes it before opencode starts. Otherwise the plugin is refreshed the next time opencode reports to ai-beacon, or when you run `ai-beacon install` again, and opencode loads it at its next start (opencode 2: after `opencode service restart`).
+
+## Your opencode configuration
+
+A wrapped opencode session, opencode 1 or 2, loads the same configuration as a plain `opencode`, including a file you point `OPENCODE_CONFIG` at. The wrapper adds its messaging tools through `OPENCODE_CONFIG_CONTENT`, which opencode loads after your global, `OPENCODE_CONFIG` and project files, so its `ai-beacon` entry wins over one of yours there.
+
+- **Turning the tools off.** Set `OPENCODE_CONFIG_CONTENT='{"mcp":{"ai-beacon":{"enabled":false}}}'` before starting the session. The wrapper then adds nothing. On opencode 2, `"disabled": true` works too, but opencode 1 rejects that key and refuses to start, so use `"enabled": false` there. `"enabled": false` in another opencode config file no longer turns them off.
+- **Your own `OPENCODE_CONFIG_CONTENT`.** The wrapper adds its tools to it, so it must be plain JSON: no comments, and `{env:…}` or `{file:…}` only inside quoted strings. Otherwise the session starts without the messaging tools, and the wrapper's log says why (see [Logs](#logs)).
+- **After the session ends.** Programs started from the session, such as a terminal or editor launched from its shell, inherit `OPENCODE_CONFIG_CONTENT`. Its tools entry finds the session's token through `AI_BEACON_AUTH_TOKEN_FILE`, a file the wrapper deletes when the session ends, or, if the wrapper crashed or was killed, at the next session start. Once it is gone, an opencode started from those programs loads normally but without the messaging tools, which belonged to the ended session.
+
+## opencode 2
+
+ai-beacon supports opencode 1 and opencode 2. opencode 2 is the `@opencode/cli` npm package, installed with `curl -fsSL https://opencode.ai/v2/install | bash` or `opencode upgrade --major`; its installer also adds an `opencode2` command. Each of these starts a session on the dashboard:
+
+```bash
+ai-beacon session -- opencode
+ai-beacon session -- opencode2
+ai-beacon session -- npx -y @opencode/cli
+```
+
+`ai-beacon install` writes one plugin for both versions, `~/.config/opencode/plugins/ai-beacon.ts`, and a wrapped session refreshes it when the binary carries a newer one.
+
+**What works:** sessions started without the wrapper report their state (working, idle, waiting at a permission prompt or a question), their subagents and the notifications, and the browser terminal works for wrapped sessions. Where a wrapped session's state shows depends on how opencode runs.
+
+**Model, tokens, cost and context.** The card shows the session's model, tokens, cost, context percentage and task, and a wrapped session's status bar its model, percentage and cost, as with opencode 1. ai-beacon's plugin reads them from opencode 2 itself as the session runs, so nothing extra starts per update. The cost and output tokens are opencode 2's own totals for the session, which count its title generation too, so they can read a little higher than opencode 1 shows for the same turns. The tokens and percentage appear once the session's first model step has finished in the running opencode, so a session you continue in a new opencode shows them after its next step.
+
+**One background service for every opencode window.** By default opencode 2 runs its plugins and tools in a background service (`opencode serve --service`) that all opencode windows share and that keeps running after they close. ai-beacon's plugin reports what happens in that service under opencode's own session ids, so it never moves a wrapped session's card on another session's behalf.
+
+**Wrapped sessions get their own server.** `opencode --standalone` runs a private server for that window instead, started with its own environment, which stops with it. So `ai-beacon session -- opencode` starts opencode 2's interface, `opencode run` and `opencode mini` with `--standalone`. Everything then appears on the wrapped session's card, as with opencode 1. The messaging tools act for that session, and killing it from the dashboard stops its turn. Other subcommands, such as `opencode serve`, and opencode 1 start exactly as before.
+
+To tell the versions apart, the wrapper looks at what you launch:
+
+- `npx` or `bunx` with `@opencode/cli` is opencode 2, and with `opencode-ai` opencode 1; nothing is run to find out.
+- `opencode2`, and on Linux and macOS an `opencode` installed with `npm install -g` or `bun add -g`, are recognized from their install, also without running anything. On Windows those installs write launcher scripts, which are asked for their version as below.
+- Any other `opencode` is asked for its version (`opencode --version`) before the launch. opencode 1 takes about a second to answer, so those launches start about a second later; opencode 2 answers in about a quarter of a second.
+- A command run through another program, such as `ssh`, `docker` or `npx opencode`, is left as you typed it.
+
+If the wrapper can't tell, the session starts without the flag; with `--log-file` set, the wrapper's log says so (see [Logs](#logs)). Pass `--standalone` yourself to fix that. When you pass `--standalone` or `--server <url>` yourself, the wrapper adds nothing.
+
+A wrapped session that runs without `--standalone` shares the background service. That covers one you point at `--server`, a subcommand the wrapper leaves alone, and an opencode 2 it couldn't recognise. Such a session:
+
+- shows its prompts, questions, subagents and notifications on a second card, under its opencode session id;
+- shows on its own card only the state opencode reports to the terminal, with opencode 2.1 and later on Linux and macOS. With opencode 2.0, or on Windows, that card has no state, and with several opencode sessions open the report can be another session's activity;
+- has messaging tools that act for the session that started the service, and none once that session has ended;
+- when killed from the dashboard, ends its window while its turn keeps running in the service.
+
+**Messaging tools on opencode 2.** opencode 2.2 and later offer `tell` and `list_sessions` as ordinary tools, as opencode 1 does. opencode 2.0 and 2.1 offer them only inside Code Mode: the model calls them from the JavaScript it runs in the `execute` tool, which those versions explain to it, and messages still go through.
+
+**Known gaps:**
+
+- opencode 2.0.0 shows a session's initial prompt in its input box without sending it: press Enter to send it. 2.1.0 and later send it.
+- The card's activity line (the last tool and the last message) stays empty with opencode 2.
+- A running opencode 2 service keeps the plugin it loaded, so the model, tokens, cost and context appear only once it runs the plugin of an ai-beacon that reads them. After updating ai-beacon, restart the service with `opencode service restart`, or close every opencode window and run `opencode service stop`. A "Plugin failed" message when opencode 2 starts means it loaded a plugin from before opencode 2 support: update ai-beacon, run `ai-beacon install` again (or start a wrapped session), then restart the service.
+- With `OPENCODE_CONFIG_DIR` set, opencode 2 reads that directory instead of `~/.config/opencode`, so it does not load the plugin `ai-beacon install` writes there, and sessions do not report their state through it. opencode 1 reads both directories.
+
 ## A smaller browser is watching
 
 A session is drawn at the size of its smallest viewer. When you open it in a browser window smaller than your terminal, the agent shrinks to the browser's size, and your terminal keeps leftover space on the right, at the bottom, or both:
@@ -217,7 +286,7 @@ A yellow ` ⚠ update required: update ai-beacon, then restart this session ` ro
 To fix it:
 
 1. Download the current binary (see [Native binaries](#native-binaries)) and put it where the old one was, or run `ai-beacon install` again from the new binary so the hooks point at it (`binary_path` in `config.toml`). A binary saved anywhere else leaves hook-launched sessions on the old one.
-2. On Windows a running `ai-beacon.exe` cannot be overwritten: exit the sessions first, or rename the old file and then download.
+2. On Windows a running `ai-beacon.exe` cannot be overwritten: exit the sessions, and quit every opencode started without the wrapper (with opencode 2, also run `opencode service stop`), since ai-beacon's opencode plugin keeps an `ai-beacon hook watch` running for each; or rename the old file and then download.
 3. Restart each session that shows the row: exit the agent and start it again (`claude --continue` resumes the conversation). A running session keeps the binary it started with, so it cannot pick up the new one by itself.
 
 Until then the wrapper stops calling the dashboard, so an old session does not use up the sign-in allowance of your network. The wrapper log shows `dashboard rejected this client as outdated` with the client's and the dashboard's protocol numbers (these are not the `ai-beacon version` numbers). Messaging tools tell the agent to ask you to update and restart.
@@ -230,11 +299,11 @@ A red row ending in `sign-in failing, retrying in <N>s` means the dashboard reje
 
 ## Logs
 
-Logs are written to `<data-dir>/logs/` by default. The session command suppresses log output to stderr (it would garble the wrapped agent's TUI), so the log file is the only place errors land.
+No log file is written unless you set one, with `--log-file` or `AI_BEACON_LOG_FILE`. The session command suppresses log output to stderr (it would garble the wrapped agent's TUI), so the log file is the only place its errors land; without one they are not recorded.
 
 | Override | Behavior |
 |----------|----------|
 | `--log-file <path>` | Absolute path writes there directly. Bare filename roots it under `<data-dir>/logs/`. |
 | `$AI_BEACON_LOG_FILE` | Same as the flag; flag wins when both are set. |
 
-For an active session, `tail -F <data-dir>/logs/<session>.log` will surface heartbeat failures, auth issues, and reconnect attempts in real time.
+For a session started with `--log-file <session>.log`, `tail -F <data-dir>/logs/<session>.log` will surface heartbeat failures, auth issues, and reconnect attempts in real time.

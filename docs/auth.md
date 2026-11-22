@@ -132,6 +132,7 @@ There is one mode: PSK bearer token (`AI_BEACON_AUTH_TOKEN`).
 - The server generates a 64-hex-char token on first boot (or accepts one via `--auth-token` / `$AI_BEACON_AUTH_TOKEN`), writes it to `<data-dir>/token` (mode `0600`), and exposes it to the dashboard's setup guide.
 - Every agent presents that same token. There is no per-user agent rotation today; rotating means generating a new token and re-running `ai-beacon install` on every agent host (see [Connecting an agent § Updating the dashboard URL or token](connect-agent.md#updating-the-dashboard-url-or-token)).
 - Per-user agent tokens via SSH challenge-response are a known follow-up. They are not in the standalone server today.
+- A wrapped session's [messaging tools](inter-session-messaging.md) authenticate with the same token. The wrapper hands it to them through a per-session file under `<data-dir>/sessions/`, mode `0600`; for opencode, the tools find that file through `AI_BEACON_AUTH_TOKEN_FILE` (see [Configuration](configuration.md#agent-client-configuration)).
 
 ## Allowlists
 
