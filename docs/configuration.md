@@ -44,6 +44,12 @@ export AI_BEACON_PROJECTS_DIR=~/work:~/oss
 |----------|---------|
 | `AI_BEACON_AUTH_TOKEN_FILE` | Path to a file holding the agent token. `ai-beacon session mcp`, the server behind the [messaging tools](inter-session-messaging.md), reads it in preference to `AI_BEACON_AUTH_TOKEN`. The wrapper sets it on the `ai-beacon` MCP entry it gives opencode, pointing at the session's token file (see [Data directory layout](#data-directory-layout)), so the token itself stays out of opencode's environment. If the file is missing, the tool server refuses to start, and a running one stops: the file is deleted when its session ends. See [Your opencode configuration](connect-agent.md#your-opencode-configuration). |
 
+**Set by the opencode plugin.** You don't set this one yourself:
+
+| Variable | Purpose |
+|----------|---------|
+| `AI_BEACON_WATCH_KEEP_ALIVE` | Set to `1` by ai-beacon's opencode plugin in the environment of the background `ai-beacon hook watch` it starts, never in opencode's own: that process then reports, every 20 seconds while opencode runs, the session opencode reported a state for last (usually the one its window shows). Not set in opencode 2's shared background service. See [opencode sessions starting and ending](connect-agent.md#opencode-sessions-starting-and-ending). |
+
 Sessions you start from the dashboard inherit the environment of the ai-beacon session already running on that machine. See [Multi-machine setup § Environment of dashboard-started sessions](multi-machine.md#environment-of-dashboard-started-sessions).
 
 **Symlinks and case.** The agent resolves symlinks before validating each `cwd` it accepts from the dashboard, so a symlink that points outside a configured root is rejected even if it lives lexically inside one. Path comparison matches the host filesystem: case-insensitive on macOS and Windows, case-sensitive on Linux — a dashboard-echoed `cwd` that differs only in case from the configured root validates on macOS/Windows and is rejected on Linux.
